@@ -54,6 +54,15 @@ void ATDSCharacter::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 
 	MovementTick(DeltaSeconds);
+
+	if (bIsSprint == true && Stamina > 0.0f)
+	{
+		DecreasStamina();
+	}
+	else if (bIsSprint == false && Stamina <= 100.0f)
+	{
+		IncreasStamina();
+	}
 }
 
 
@@ -62,8 +71,11 @@ void ATDSCharacter::SetupPlayerInputComponent(UInputComponent* NewInputComponent
 {
 	Super::SetupPlayerInputComponent(NewInputComponent);
 
-	InputComponent->BindAxis(TEXT("MoveForward"), this, &ATDSCharacter::InputAxisX);
-	InputComponent->BindAxis(TEXT("MoveRight"), this, &ATDSCharacter::InputAxisY);
+	InputComponent->BindAxis("MoveForward", this, &ATDSCharacter::InputAxisX);
+	InputComponent->BindAxis("MoveRight", this, &ATDSCharacter::InputAxisY);
+
+	InputComponent->BindAction("MovementModeChangeSprint", IE_Pressed, this, &ATDSCharacter::Sprint);
+	InputComponent->BindAction("MovementModeChangeSprint", IE_Pressed, this, &ATDSCharacter::StopSprint);
 }
 
 void ATDSCharacter::BeginPlay()
@@ -105,18 +117,23 @@ void ATDSCharacter::CharacterUpdate()
 	{
 	case EMovementState::Aim_State:
 		ResSpeed = MovementInfo.AimSpeedNormal;
+		StopSprint();
 		break;
 	case EMovementState::AimWalk_State:
 		ResSpeed = MovementInfo.AimSpeedWalk;
+		StopSprint();
 		break;
 	case EMovementState::Walk_State:
 		ResSpeed = MovementInfo.WalkSpeedNormal;
+		StopSprint();
 		break;
 	case EMovementState::Run_State:
 		ResSpeed = MovementInfo.RunSpeedNormal;
+		StopSprint();
 		break;
 	case EMovementState::SptintRun_State:
 		ResSpeed = MovementInfo.SprintRunSpeed;
+		Sprint();
 		break;
 	default:
 		break;
@@ -160,4 +177,38 @@ void ATDSCharacter::ChangeMovementState()
 	}
 
 	CharacterUpdate();
+}
+
+void ATDSCharacter::Sprint()
+{
+	bIsSprint = true;
+	DecreasStamina();
+}
+
+void ATDSCharacter::StopSprint()
+{
+	bIsSprint = false;
+	IncreasStamina();
+}
+
+void ATDSCharacter::DecreasStamina()
+{
+	if (bIsSprint == true && Stamina > 0.0f)
+	{
+		Stamina = Stamina - MinusStamina;
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Stamina Decreas %f"), Stamina));
+	}
+	else if (Stamina == 0.0f)
+	{
+		StopSprint();
+	}
+}
+
+void ATDSCharacter::IncreasStamina()
+{
+	if (bIsSprint == false && Stamina < 100.0f)
+	{
+		Stamina = Stamina + PlusStamina;
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Stamina Increas %f"), Stamina));
+	}
 }

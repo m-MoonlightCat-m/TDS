@@ -68,4 +68,22 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ChangeMovementState();
+
+	UFUNCTION(BlueprintCallable)
+	void Sprint();
+
+	UFUNCTION(BlueprintCallable)
+	void StopSprint();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
+	bool bIsSprint = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
+	float MinusStamina = 1.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
+	float PlusStamina = 1.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
+	float Stamina = 100.0f;
+
+	void DecreasStamina();
+	void IncreasStamina();
 };
