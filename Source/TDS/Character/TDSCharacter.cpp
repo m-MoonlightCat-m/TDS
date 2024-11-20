@@ -11,7 +11,9 @@
 #include "Materials/Material.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
+#include <cmath> 
 #include "Kismet/KismetMathLibrary.h"
+#include "Math/UnrealMathUtility.h"
 #include "Components/InputComponent.h"
 
 
@@ -47,6 +49,9 @@ ATDSCharacter::ATDSCharacter()
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
+
+	MaxStamina = 100.0f;
+	Stamina = MaxStamina;
 }
 
 void ATDSCharacter::Tick(float DeltaSeconds)
@@ -55,14 +60,7 @@ void ATDSCharacter::Tick(float DeltaSeconds)
 
 	MovementTick(DeltaSeconds);
 
-	if (bIsSprint == true && Stamina > 0.0f)
-	{
-		DecreasStamina();
-	}
-	else if (bIsSprint == false && Stamina <= 100.0f)
-	{
-		IncreasStamina();
-	}
+	UpdateStamina(DeltaSeconds);
 }
 
 
@@ -74,8 +72,8 @@ void ATDSCharacter::SetupPlayerInputComponent(UInputComponent* NewInputComponent
 	InputComponent->BindAxis("MoveForward", this, &ATDSCharacter::InputAxisX);
 	InputComponent->BindAxis("MoveRight", this, &ATDSCharacter::InputAxisY);
 
-	InputComponent->BindAction("MovementModeChangeSprint", IE_Pressed, this, &ATDSCharacter::Sprint);
-	InputComponent->BindAction("MovementModeChangeSprint", IE_Pressed, this, &ATDSCharacter::StopSprint);
+	InputComponent->BindAction("MovementModeChangeSprint", IE_Pressed, this, &ATDSCharacter::StartSprint);
+	InputComponent->BindAction("MovementModeChangeSprint", IE_Released, this, &ATDSCharacter::StopSprint);
 }
 
 void ATDSCharacter::BeginPlay()
@@ -90,7 +88,16 @@ void ATDSCharacter::InputAxisY(float value)
 
 void ATDSCharacter::InputAxisX(float value)
 {
-	AxisX = value;
+	//AxisX = value;
+	if (bIsSprint)
+	{
+		FVector ForwardVector = GetActorForwardVector();
+		AddMovementInput(ForwardVector, value);
+	}
+	else
+	{
+		AddMovementInput(GetActorForwardVector(), value); 
+	}
 }
 
 void ATDSCharacter::MovementTick(float DeltaTime)
@@ -117,23 +124,18 @@ void ATDSCharacter::CharacterUpdate()
 	{
 	case EMovementState::Aim_State:
 		ResSpeed = MovementInfo.AimSpeedNormal;
-		StopSprint();
 		break;
 	case EMovementState::AimWalk_State:
 		ResSpeed = MovementInfo.AimSpeedWalk;
-		StopSprint();
 		break;
 	case EMovementState::Walk_State:
 		ResSpeed = MovementInfo.WalkSpeedNormal;
-		StopSprint();
 		break;
 	case EMovementState::Run_State:
 		ResSpeed = MovementInfo.RunSpeedNormal;
-		StopSprint();
 		break;
 	case EMovementState::SptintRun_State:
 		ResSpeed = MovementInfo.SprintRunSpeed;
-		Sprint();
 		break;
 	default:
 		break;
@@ -150,7 +152,7 @@ void ATDSCharacter::ChangeMovementState()
 	}
 	else
 	{
-		if (SprintRunEnable)
+		if (SprintRunEnable && bIsSprint)
 		{
 			WalkEnable = false;
 			AimEnable = false;
@@ -176,39 +178,64 @@ void ATDSCharacter::ChangeMovementState()
 		}
 	}
 
+	if (bIsRecoveringStamina)
+	{
+		MovementState = EMovementState::Walk_State;
+	}
+
 	CharacterUpdate();
 }
 
-void ATDSCharacter::Sprint()
+void ATDSCharacter::StartSprint()
 {
+	if (bIsSprint || bIsRecoveringStamina) return;
+
 	bIsSprint = true;
-	DecreasStamina();
+	SprintRunEnable = true;
+	ChangeMovementState();
 }
 
 void ATDSCharacter::StopSprint()
 {
 	bIsSprint = false;
-	IncreasStamina();
+	SprintRunEnable = false;
+	ChangeMovementState();
 }
 
-void ATDSCharacter::DecreasStamina()
+void ATDSCharacter::UpdateStamina(float DeltaTime)
 {
-	if (bIsSprint == true && Stamina > 0.0f)
+	if (bIsSprint)
 	{
-		Stamina = Stamina - MinusStamina;
+		Stamina = FMath::Clamp(Stamina - Stamina * DeltaTime, 0.0f, MaxStamina);
+		if (static_cast<int>(Stamina) <= 0 && !bIsRecoveringStamina)
+		{
+			Stamina = 0.0f;
+			StopSprint();
+			StartStaminaRecovery();
+		}
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Stamina Decreas %f"), Stamina));
 	}
-	else if (Stamina == 0.0f)
+	else
 	{
-		StopSprint();
+		if (Stamina < MaxStamina)
+		{
+			Stamina += RegenerationStaminaRate * DeltaTime;
+			Stamina = FMath::Min(Stamina, MaxStamina);
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Stamina Decreas %f"), Stamina));
+		}
 	}
 }
 
-void ATDSCharacter::IncreasStamina()
+void ATDSCharacter::StartStaminaRecovery()
 {
-	if (bIsSprint == false && Stamina < 100.0f)
-	{
-		Stamina = Stamina + PlusStamina;
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Stamina Increas %f"), Stamina));
-	}
+	bIsRecoveringStamina = true; 
+	GetWorld()->GetTimerManager().SetTimer(StaminaRecoveryTimer, this, &ATDSCharacter::EndStaminaRecovery, 10.0f, false);
 }
+
+void ATDSCharacter::EndStaminaRecovery()
+{
+	bIsRecoveringStamina = false; 
+	MovementState = EMovementState::Run_State;
+	CharacterUpdate(); 
+}
+

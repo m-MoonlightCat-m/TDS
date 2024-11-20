@@ -69,21 +69,31 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ChangeMovementState();
 
-	UFUNCTION(BlueprintCallable)
-	void Sprint();
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	void StartSprint();
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void StopSprint();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
 	bool bIsSprint = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
-	float MinusStamina = 1.0f;
+	float StaminaCoast = 10.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
-	float PlusStamina = 1.0f;
+	float RegenerationStaminaRate = 5.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
-	float Stamina = 100.0f;
+	float Stamina;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
+	float MaxStamina;
 
-	void DecreasStamina();
-	void IncreasStamina();
+	void UpdateStamina(float DeltaTime);
+
+	FVector LastDirection;
+	bool bCanSprint;
+
+	FTimerHandle StaminaRecoveryTimer;  
+	bool bIsRecoveringStamina;
+
+	void StartStaminaRecovery();
+	void EndStaminaRecovery();
 };
