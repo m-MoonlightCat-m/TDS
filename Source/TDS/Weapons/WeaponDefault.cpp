@@ -8,6 +8,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "GameFramework/Actor.h"
 #include "Engine/StaticMeshActor.h"
+#include "../Character/TDSInventoryComponent.h"
 
 // Sets default values
 AWeaponDefault::AWeaponDefault()
@@ -54,23 +55,14 @@ void AWeaponDefault::Tick(float DeltaTime)
 
 void AWeaponDefault::FireTick(float DeltaTime)
 {
-	if (GetWeaponRound() > 0)
+	if (WeaponFiring && GetWeaponRound() > 0 && !WeaponReloading)
 	{
-		if (WeaponFiring)
-			if (FireTimer < 0.f)
-			{
-				if (!WeaponReloading)
-					Fire();
-			}
-			else
-				FireTimer -= DeltaTime;
-	}
-	else
-	{
-		if (!WeaponReloading)
+		if (FireTimer < 0.f)
 		{
-			InitReload();
+			Fire();
 		}
+		else
+			FireTimer -= DeltaTime;
 	}
 }
 
@@ -200,11 +192,12 @@ void AWeaponDefault::Fire()
 		}
 	}
 
+	FireTimer = WeaponSetting.RateOfFire;
+	AdditionalWeaponInfo.Round--;
+	ChangeDispersionByShot();
+
 	OnWeaponFireStart.Broadcast(AnimToPlay);
 
-	FireTimer = WeaponSetting.RateOfFire;
-	WeaponInfo.Round--;
-	ChangeDispersionByShot();
 
 	UGameplayStatics::SpawnSoundAtLocation(GetWorld(), WeaponSetting.SoundFireWeapon, ShootLocation->GetComponentLocation());
 	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), WeaponSetting.EffectFireWeapon, ShootLocation->GetComponentLocation());
@@ -272,6 +265,12 @@ void AWeaponDefault::Fire()
 				}
 			}
 		}
+	}
+
+	if (GetWeaponRound() <= 0 && !WeaponReloading)
+	{
+		if (CheckCanWeaponReload())
+			InitReload();
 	}
 }
 
@@ -370,7 +369,7 @@ int8 AWeaponDefault::GetNumberProjectileByShoot() const
 
 int32 AWeaponDefault::GetWeaponRound()
 {
-	return WeaponInfo.Round;
+	return AdditionalWeaponInfo.Round;
 }
 
 void AWeaponDefault::InitReload()
@@ -407,9 +406,69 @@ void AWeaponDefault::FinishReload()
 {
 	WeaponReloading = false;
 
-	WeaponInfo.Round = WeaponSetting.MaxRound;
+	int8 AviableAmmoFromInventory = GetAviableAmmoForReload();
+	int8 AmmoNeedTakeFromInv;
+	int8 NeedToReload = WeaponSetting.MaxRound - AdditionalWeaponInfo.Round;
 
-	OnWeaponReloadEnd.Broadcast();
+	if (NeedToReload > AviableAmmoFromInventory)
+	{
+		AdditionalWeaponInfo.Round = AviableAmmoFromInventory;
+		AmmoNeedTakeFromInv = AviableAmmoFromInventory;
+	}
+	else
+	{
+		AdditionalWeaponInfo.Round += NeedToReload;
+		AmmoNeedTakeFromInv = NeedToReload;
+	}
+
+	OnWeaponReloadEnd.Broadcast(true, AmmoNeedTakeFromInv);
+}
+
+void AWeaponDefault::CancelReload()
+{
+	WeaponReloading = false;
+	if (SkeletalMeshWeapon && SkeletalMeshWeapon->GetAnimInstance())
+		SkeletalMeshWeapon->GetAnimInstance()->StopAllMontages(0.15f);
+
+	OnWeaponReloadEnd.Broadcast(false, 0);
+	DropClipFlag = false;
+}
+
+bool AWeaponDefault::CheckCanWeaponReload()
+{
+	bool result = true;
+	if (GetOwner())
+	{
+		UTDSInventoryComponent* MyInv = Cast<UTDSInventoryComponent>(GetOwner()->GetComponentByClass(UTDSInventoryComponent::StaticClass()));
+		if (MyInv)
+		{
+			int8 AviableAmmoForWeapon;
+			if (!MyInv->CheckAmmoForWeapon(WeaponSetting.WeaponType, AviableAmmoForWeapon))
+			{
+				result = false;
+			}
+		}
+	}
+
+	return result;
+}
+
+int8 AWeaponDefault::GetAviableAmmoForReload()
+{
+	int8 AviableAmmoForWeapon = WeaponSetting.MaxRound;
+	if (GetOwner())
+	{
+		UTDSInventoryComponent* MyInv = Cast<UTDSInventoryComponent>(GetOwner()->GetComponentByClass(UTDSInventoryComponent::StaticClass()));
+		if (MyInv)
+		{
+			if (MyInv->CheckAmmoForWeapon(WeaponSetting.WeaponType, AviableAmmoForWeapon))
+			{
+				AviableAmmoForWeapon = AviableAmmoForWeapon;
+			}
+		}
+	}
+
+	return AviableAmmoForWeapon;
 }
 
 void AWeaponDefault::InitDropMesh(UStaticMesh* DropMesh, FTransform Offset, FVector DropImpulseDirection, float LifeTimeMesh, float ImpulseRandomDispertion, float PowerImpulse, float CustomMass)

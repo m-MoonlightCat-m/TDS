@@ -4,12 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "TDS/GameCatalog/TDSPlayerController.h"
+#include "../GameCatalog/TDSPlayerController.h"
 #include "Components/InputComponent.h"
 
-#include "TDS/FuncLibrary/TDSTypes.h"
+#include "../FuncLibrary/TDSTypes.h"
 #include "../GameCatalog/TDSGameInstance.h"
 #include "../Weapons/WeaponDefault.h"
+#include "../Character/TDSInventoryComponent.h"
 #include "TDSCharacter.generated.h"
 
 
@@ -31,6 +32,9 @@ public:
 	FORCEINLINE class UCameraComponent* GetTopDownCameraComponent() const { return TopDownCameraComponent; }
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
+	class UTDSInventoryComponent* InventoryComponent;
 
 private:
 	/** Top down camera */
@@ -93,17 +97,22 @@ public:
 	UFUNCTION(BlueprintCallable)
 	AWeaponDefault* GetCurrentWeapon();
 	UFUNCTION()
-	void InitWeapn(FName IdWeapon);
+	void InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponAdditionalInfo, int32 NewCurrentIndexWeapon);
 	UFUNCTION(BlueprintCallable)
 	void TryReloadWeapon();
 	UFUNCTION()
 	void WeaponReloadStart(UAnimMontage* Anim);
 	UFUNCTION()
-	void WeaponReloadEnd();
+	void WeaponReloadEnd(bool bIsSuccess, int32 AmmoTake);
+	UFUNCTION()
+	void WeaponFireStart(UAnimMontage* Anim);
 	UFUNCTION(BlueprintNativeEvent)
 	void WeaponReloadStart_BP(UAnimMontage* Anim);
 	UFUNCTION(BlueprintNativeEvent)
-	void WeaponReloadEnd_BP();
+	void WeaponReloadEnd_BP(bool bIsSuccess, int32 AmmoTake);
+	UFUNCTION(BlueprintNativeEvent)
+	void WeaponFireStart_BP(UAnimMontage* Anim);
+
 
 	UFUNCTION(BlueprintCallable)
 	UDecalComponent* GetCursorToWorld();
@@ -135,4 +144,10 @@ public:
 
 	void StartStaminaRecovery();
 	void EndStaminaRecovery();
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
+	int32 CurrentIndexWeapon = 0;
+
+	void TrySwitchNextWeapon();
+	void TrySwitchPreviosWeapon();
 };
