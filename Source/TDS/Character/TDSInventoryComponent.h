@@ -64,14 +64,6 @@ public:
 	bool CheckAmmoForWeapon(EWeaponType TypeWeapon, int8 &AviableAmmoForWeapon);
 
 
-	bool bIsSuccess = false;
-	FName NewIdWeapon;
-	FAdditionalWeaponInfo NewAdditionalInfo;
-	int32 NewCurrentIndex = 0;
-	void ScrollWeapon(int32 ScrollIndex);
-	void ScrollWeaponLast(int32 ScrollSecondIndex);
-
-
 	//Interface PickUp Actors
 	UFUNCTION(BlueprintCallable, Category = "Interface")
 	bool CheckCanTakeAmmo(EWeaponType AmmoType);
