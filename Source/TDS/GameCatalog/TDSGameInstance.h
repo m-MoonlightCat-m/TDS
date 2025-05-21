@@ -19,6 +19,12 @@ class TDS_API UTDSGameInstance : public UGameInstance
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WeaponSetting")
 	UDataTable* weaponInfoTable = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WeaponSetting")
+	UDataTable* DropItemInfoTable = nullptr;
+
+
 	UFUNCTION(BlueprintCallable)
 	bool GetWeaponInfoByName(FName NameWaepon, FWeaponInfo& OutInfo);
+	UFUNCTION(BlueprintCallable)
+	bool GetDropItemInfoByName(FName NameItem, FDropItem& OutInfo);
 };

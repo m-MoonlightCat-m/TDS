@@ -56,6 +56,7 @@ public:
 
 	FAdditionalWeaponInfo GetAdditionalInfoWeapon(int32 IndexWeapon);
 	int32 GetWeaponIndexSlotByName(FName IdWeaponName);
+	FName GetWeaponNameBySlotIndex(int32 IndexSlot);
 	void SetAdditionalInfoWeapon(int32 IndexWeapon, FAdditionalWeaponInfo NewInfo);
 
 	UFUNCTION(BlueprintCallable)
@@ -70,7 +71,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Interface")
 	bool CheckCanTakeWeapon(int32 FreeSlot);
 	UFUNCTION(BlueprintCallable, Category = "Interface")
-	void SwitchWeaponToInventory(); 
+	bool SwitchWeaponToInventory(FWeaponSlot NewWeapon, int32 IndexSlot, int32 CurrentIndexWeaponChar, FDropItem& DropItemInfo);
 	UFUNCTION(BlueprintCallable, Category = "Interface")
 	bool TryGetWeaponToInventory(FWeaponSlot NewWeapon);
+
+	UFUNCTION(BlueprintCallable, Category = "Interface")
+	bool GetDropItemInfoFromInventory(int32 IndexSlot, FDropItem &DropItemInfo);
 };

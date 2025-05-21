@@ -328,14 +328,14 @@ void ATDSCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponA
 					CurrentWeapon = myWeapon;
 
 					myWeapon->WeaponSetting = myWeaponInfo;
-					myWeapon->AdditionalWeaponInfo.Round = myWeaponInfo.MaxRound;
+					//myWeapon->AdditionalWeaponInfo.Round = myWeaponInfo.MaxRound;
 
 					//!!!DEBUG!!!!
 					myWeapon->ReloadTime = myWeaponInfo.ReloadTime;
 					myWeapon->UpdateStateWeapon(MovementState);
 
 					myWeapon->AdditionalWeaponInfo = WeaponAdditionalInfo;
-					if (InventoryComponent)
+					//if (InventoryComponent)
 						CurrentIndexWeapon = NewCurrentIndexWeapon;
 
 					myWeapon->OnWeaponReloadStart.AddDynamic(this, &ATDSCharacter::WeaponReloadStart);
