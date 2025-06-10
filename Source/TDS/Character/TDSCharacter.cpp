@@ -484,9 +484,15 @@ void ATDSCharacter::TrySwitchNextWeapon()
 
 		if (InventoryComponent)
 		{
+			int8 NewIndex = CurrentIndexWeapon + 1;
+			if (NewIndex >= InventoryComponent->WeaponSlot.Num())
+			{
+				NewIndex = 0;
+			}
+
 			if (InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon + 1, OldIndex, OldInfo, true))
 			{
-
+				CurrentIndexWeapon = NewIndex;
 			}
 		}
 	}
@@ -507,9 +513,15 @@ void ATDSCharacter::TrySwitchPreviosWeapon()
 
 		if (InventoryComponent)
 		{
+			int8 NewIndex = CurrentIndexWeapon - 1;
+			if (NewIndex < 0)
+			{
+				NewIndex = InventoryComponent->WeaponSlot.Num() - 1;
+			}
+
 			if (InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon - 1, OldIndex, OldInfo, false))
 			{
-
+				CurrentIndexWeapon = NewIndex;
 			}
 		}
 	}
