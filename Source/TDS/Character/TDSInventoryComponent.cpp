@@ -88,7 +88,7 @@ bool UTDSInventoryComponent::SwitchWeaponToIndex(int32 ChangeToIndex, int32 OldI
 			}
 			else 
 			{
-				StartIndex = (StartIndex - 1 ) % NumSlots;
+				StartIndex = (StartIndex - 1  + NumSlots) % NumSlots;
 			}
 
 			if (!WeaponSlot[StartIndex].NameItem.IsNone() && WeaponSlot[StartIndex].AdditionalInfo.Round > 0)
