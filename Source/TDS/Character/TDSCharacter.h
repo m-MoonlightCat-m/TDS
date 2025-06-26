@@ -11,6 +11,7 @@
 #include "../GameCatalog/TDSGameInstance.h"
 #include "../Weapons/WeaponDefault.h"
 #include "../Character/TDSInventoryComponent.h"
+#include "../Character/TDSCharacterHealthComponent.h"
 #include "TDSCharacter.generated.h"
 
 
@@ -35,6 +36,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 	class UTDSInventoryComponent* InventoryComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
+	class UTDSCharacterHealthComponent* HealthComponent;
 
 private:
 	/** Top down camera */

@@ -17,6 +17,7 @@
 #include "Components/InputComponent.h"
 #include "TDSInventoryComponent.h"
 #include "../GameCatalog/TDSGameInstance.h"
+#include "TDSCharacterHealthComponent.h"
 
 
 ATDSCharacter::ATDSCharacter()
@@ -49,6 +50,7 @@ ATDSCharacter::ATDSCharacter()
 	TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
 	InventoryComponent = CreateDefaultSubobject<UTDSInventoryComponent>(TEXT("InventoryComponent"));
+	HealthComponent = CreateDefaultSubobject<UTDSCharacterHealthComponent>(TEXT("HealthComponent"));
 
 	if (InventoryComponent)
 		InventoryComponent->OnSwitchWeapon.AddDynamic(this, &ATDSCharacter::InitWeapon);
