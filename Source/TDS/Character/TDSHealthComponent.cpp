@@ -46,16 +46,17 @@ void UTDSHealthComponent::ChangeCurrentHealth(float ChangeValue)
 {
 	Health += ChangeValue;
 	OnHealthChange.Broadcast(Health, ChangeValue);
-	if (Health < 0.0f)
+
+	if (Health > 100.0f)
 	{
-		OnDead.Broadcast();
-		DeadEvent();
+		Health = 100.0f;
 	}
-
-}
-
-void UTDSHealthComponent::DeadEvent_Implementation()
-{
-	//in BP
+	else
+	{
+		if (Health < 0.0f)
+		{
+			OnDead.Broadcast();
+		}
+	}
 }
 

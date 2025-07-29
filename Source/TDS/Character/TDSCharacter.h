@@ -23,6 +23,8 @@ class ATDSCharacter : public ACharacter
 public:
 	ATDSCharacter();
 
+	FTimerHandle TimerHandle_RagDollTimer;
+
 	// Called every frame.
 	virtual void Tick(float DeltaSeconds) override;
 
@@ -38,7 +40,7 @@ public:
 	class UTDSInventoryComponent* InventoryComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
-	class UTDSCharacterHealthComponent* HealthComponent;
+	class UTDSCharacterHealthComponent* CharHealthComponent;
 
 private:
 	/** Top down camera */
@@ -67,6 +69,11 @@ public:
 	bool WalkEnable = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	bool AimEnable = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	bool bIsAlive = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	TArray<UAnimMontage*> DeadsAnim;
 
 	AWeaponDefault* CurrentWeapon = nullptr;
 
@@ -154,4 +161,9 @@ public:
 
 	void TrySwitchNextWeapon();
 	void TrySwitchPreviosWeapon();
+
+	UFUNCTION(BlueprintCallable)
+	void CharDead();
+	void EnableRagdoll();
+	float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 };

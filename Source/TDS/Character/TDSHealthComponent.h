@@ -53,6 +53,5 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Health")
 	virtual void ChangeCurrentHealth(float ChangeValue);
 
-	UFUNCTION(BlueprintNativeEvent)
-	void DeadEvent();
+	
 };

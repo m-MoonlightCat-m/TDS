@@ -50,7 +50,10 @@ ATDSCharacter::ATDSCharacter()
 	TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
 	InventoryComponent = CreateDefaultSubobject<UTDSInventoryComponent>(TEXT("InventoryComponent"));
-	HealthComponent = CreateDefaultSubobject<UTDSCharacterHealthComponent>(TEXT("HealthComponent"));
+	CharHealthComponent = CreateDefaultSubobject<UTDSCharacterHealthComponent>(TEXT("HealthComponent"));
+
+	if (CharHealthComponent)
+		CharHealthComponent->OnDead.AddDynamic(this, &ATDSCharacter::CharDead);
 
 	if (InventoryComponent)
 		InventoryComponent->OnSwitchWeapon.AddDynamic(this, &ATDSCharacter::InitWeapon);
@@ -527,5 +530,36 @@ void ATDSCharacter::TrySwitchPreviosWeapon()
 			}
 		}
 	}
+}
+
+void ATDSCharacter::CharDead()
+{
+	float TimeAnim = 0.0f;
+	int32 rnd = FMath::RandHelper(DeadsAnim.Num());
+
+	if (DeadsAnim.IsValidIndex(rnd) && DeadsAnim[rnd] && GetMesh()->GetAnimInstance())
+	{
+		TimeAnim = DeadsAnim[rnd]->GetPlayLength();
+		GetMesh()->GetAnimInstance()->Montage_Play(DeadsAnim[rnd]);
+	}
+
+	UnPossessed();
+
+	//Timer Ragdoll
+	GetWorldTimerManager().SetTimer(TimerHandle_RagDollTimer, this, &ATDSCharacter::EnableRagdoll, TimeAnim, false);
+}
+
+void ATDSCharacter::EnableRagdoll()
+{
+
+}
+
+float ATDSCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	CharHealthComponent->ChangeCurrentHealth(-DamageAmount);
+
+	return ActualDamage;
 }
 
