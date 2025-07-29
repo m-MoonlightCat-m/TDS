@@ -123,3 +123,8 @@ void ATDSPlayerController::OnTouchReleased()
 	bIsTouch = false;
 	OnSetDestinationReleased();
 }
+
+void ATDSPlayerController::OnUnPossess()
+{
+	Super::OnUnPossess();
+}

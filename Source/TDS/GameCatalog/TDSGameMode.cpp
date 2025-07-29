@@ -24,3 +24,7 @@ ATDSGameMode::ATDSGameMode()
 		PlayerControllerClass = PlayerControllerBPClass.Class;
 	}
 }
+
+void ATDSGameMode::PlayerCharacterDead()
+{
+}
