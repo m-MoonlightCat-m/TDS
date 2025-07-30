@@ -40,7 +40,8 @@ public:
 	class UTDSInventoryComponent* InventoryComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
-	class UTDSCharacterHealthComponent* CharHealthComponent;
+	class UTDSCharacterHealthComponent* 
+		Component;
 
 private:
 	/** Top down camera */
