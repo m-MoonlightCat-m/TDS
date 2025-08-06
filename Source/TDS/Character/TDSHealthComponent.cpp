@@ -42,8 +42,10 @@ void UTDSHealthComponent::SetCurrentHealth(float NewHealth)
 	Health = NewHealth;
 }
 
-void UTDSHealthComponent::ChangeCurrentHealth(float ChangeValue)
+void UTDSHealthComponent::ChangeHealthValue(float ChangeValue)
 {
+	ChangeValue = ChangeValue * CoefDamage;
+
 	Health += ChangeValue;
 	OnHealthChange.Broadcast(Health, ChangeValue);
 
