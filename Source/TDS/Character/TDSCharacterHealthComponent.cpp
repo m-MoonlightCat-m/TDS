@@ -7,7 +7,7 @@ void UTDSCharacterHealthComponent::ChangeHealthValue(float ChangeValue)
 {
 	float CurrentDamage = ChangeValue * CoefDamage;
 		
-	if (Shield > 0.0f)
+	if (Shield > 0.0f && ChangeValue < 0.0f)
 	{
 		ChangeShieldValue(ChangeValue);
 
@@ -32,7 +32,6 @@ void UTDSCharacterHealthComponent::ChangeShieldValue(float ChangeValue)
 {
 	Shield += ChangeValue;
 
-	OnShieldChange.Broadcast(Shield, ChangeValue);
 
 	if (Shield > 100.0f)
 	{
@@ -50,6 +49,8 @@ void UTDSCharacterHealthComponent::ChangeShieldValue(float ChangeValue)
 		
 		GetWorld()->GetTimerManager().ClearTimer(TimerHandle_ShieldRecoveryRateTimer);
 	}
+
+	OnShieldChange.Broadcast(Shield, ChangeValue);
 }
 
 void UTDSCharacterHealthComponent::CoolDownShieldEnd()
@@ -74,4 +75,6 @@ void UTDSCharacterHealthComponent::RecoveryShield()
 	}
 	else
 		Shield = tmp;
+
+	OnShieldChange.Broadcast(Shield, ShieldRecoverValue);
 }

@@ -31,8 +31,6 @@ protected:
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shield")
-	float ShieldRecover = 10.0f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shield")
 	float CollDownShieldRecoverTime = 5.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shield")
 	float ShieldRecoverValue = 1.0f;
