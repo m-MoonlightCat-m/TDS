@@ -40,8 +40,10 @@ public:
 	class UTDSInventoryComponent* InventoryComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
-	class UTDSCharacterHealthComponent* 
-		CharHealthComponent;
+	class UTDSCharacterHealthComponent* CharHealthComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
+	class UTDSStaminaComponent* StaminaComponent;
 
 private:
 	/** Top down camera */
@@ -137,25 +139,26 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
 	bool bIsSprint = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
+	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
 	float StaminaCoast = 10.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
 	float RegenerationStaminaRate = 5.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
 	float Stamina;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
-	float MaxStamina;
+	float MaxStamina;*/
 
 	void UpdateStamina(float DeltaTime);
+	void SetCanSprint(bool bNewCanSprint);
 
 	FVector LastDirection;
-	bool bCanSprint;
+	bool bCanSprint = true;
 
-	FTimerHandle StaminaRecoveryTimer;  
+	/*FTimerHandle StaminaRecoveryTimer;  
 	bool bIsRecoveringStamina;
 
 	void StartStaminaRecovery();
-	void EndStaminaRecovery();
+	void EndStaminaRecovery();*/
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
 	int32 CurrentIndexWeapon = 0;

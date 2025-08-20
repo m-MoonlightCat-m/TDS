@@ -27,7 +27,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Component")
 	class UProjectileMovementComponent* BulletProjectileMovement = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Component")
-	class UNiagaraComponent* BulletFX = nullptr;
+	class UNiagaraComponent* BulletFX	= nullptr;
 
 
 	FProjectileInfo ProjectileSetting;

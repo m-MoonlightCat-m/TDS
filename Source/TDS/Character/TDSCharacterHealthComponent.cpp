@@ -13,7 +13,7 @@ void UTDSCharacterHealthComponent::ChangeHealthValue(float ChangeValue)
 
 		if (Shield < 0.0f)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("UTDSCharacterHealthComponent::ChangeHealthValue - Shield < 0"));
+			//UE_LOG(LogTemp, Warning, TEXT("UTDSCharacterHealthComponent::ChangeHealthValue - Shield < 0"));
 		}
 	}
 	else

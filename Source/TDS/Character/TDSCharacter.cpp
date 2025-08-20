@@ -18,6 +18,7 @@
 #include "TDSInventoryComponent.h"
 #include "../GameCatalog/TDSGameInstance.h"
 #include "TDSCharacterHealthComponent.h"
+#include "TDSStaminaComponent.h"
 
 
 ATDSCharacter::ATDSCharacter()
@@ -51,6 +52,7 @@ ATDSCharacter::ATDSCharacter()
 
 	InventoryComponent = CreateDefaultSubobject<UTDSInventoryComponent>(TEXT("InventoryComponent"));
 	CharHealthComponent = CreateDefaultSubobject<UTDSCharacterHealthComponent>(TEXT("HealthComponent"));
+	StaminaComponent = CreateDefaultSubobject<UTDSStaminaComponent>(TEXT("StaminaComponent"));
 
 	if (CharHealthComponent)
 		CharHealthComponent->OnDead.AddDynamic(this, &ATDSCharacter::CharDead);
@@ -63,8 +65,8 @@ ATDSCharacter::ATDSCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
 
-	MaxStamina = 100.0f;
-	Stamina = MaxStamina;
+	/*MaxStamina = 100.0f;
+	Stamina = MaxStamina;*/
 }
 
 void ATDSCharacter::Tick(float DeltaSeconds)
@@ -257,7 +259,7 @@ void ATDSCharacter::ChangeMovementState()
 	}
 	else
 	{
-		if (SprintRunEnable && bIsSprint)
+		if (SprintRunEnable && bIsSprint && bCanSprint)
 		{
 			WalkEnable = false;
 			AimEnable = false;
@@ -281,11 +283,6 @@ void ATDSCharacter::ChangeMovementState()
 				}
 			}
 		}
-	}
-
-	if (bIsRecoveringStamina)
-	{
-		MovementState = EMovementState::Walk_State;
 	}
 
 	CharacterUpdate();
@@ -425,11 +422,19 @@ UDecalComponent* ATDSCharacter::GetCursorToWorld()
 
 void ATDSCharacter::StartSprint()
 {
-	if (bIsSprint || bIsRecoveringStamina) return;
-
-	bIsSprint = true;
-	SprintRunEnable = true;
-	ChangeMovementState();
+	if (StaminaComponent && StaminaComponent->GetCurrentStamina() > 0.0f)
+	{
+		bIsSprint = true;
+		SprintRunEnable = true;
+		ChangeMovementState();
+	}
+	else
+	{
+		bIsSprint = false;
+		SprintRunEnable = false;
+		ChangeMovementState();
+	}
+	//if (bIsSprint) return;
 }
 
 void ATDSCharacter::StopSprint()
@@ -443,16 +448,25 @@ void ATDSCharacter::UpdateStamina(float DeltaTime)
 {
 	if (bIsSprint)
 	{
-		Stamina = FMath::Clamp(Stamina - Stamina * DeltaTime, 0.0f, MaxStamina);
+		float NewStamina = StaminaComponent->GetCurrentStamina() - 1.0f;
+		StaminaComponent->UpdateStaminaValue(NewStamina);
+
+		if (NewStamina <= 0.0f)
+		{
+			bIsSprint = false;
+			SprintRunEnable = false;
+			ChangeMovementState();
+		}
+		/*Stamina = FMath::Clamp(Stamina - Stamina * DeltaTime, 0.0f, MaxStamina);
 		if (static_cast<int>(Stamina) <= 0 && !bIsRecoveringStamina)
 		{
 			Stamina = 0.0f;
 			StopSprint();
 			StartStaminaRecovery();
 		}
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Stamina Decreas %f"), Stamina));
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Stamina Decreas %f"), Stamina));*/
 	}
-	else
+	/*else
 	{
 		if (Stamina < MaxStamina)
 		{
@@ -460,10 +474,21 @@ void ATDSCharacter::UpdateStamina(float DeltaTime)
 			Stamina = FMath::Min(Stamina, MaxStamina);
 			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Stamina Decreas %f"), Stamina));
 		}
+	}*/
+}
+
+void ATDSCharacter::SetCanSprint(bool bNewCanSprint)
+{
+	bCanSprint = bNewCanSprint;
+
+	if (!bCanSprint && bIsSprint)
+	{
+		bIsSprint = false;
+		ChangeMovementState();
 	}
 }
 
-void ATDSCharacter::StartStaminaRecovery()
+/*void ATDSCharacter::StartStaminaRecovery()
 {
 	bIsRecoveringStamina = true; 
 	GetWorld()->GetTimerManager().SetTimer(StaminaRecoveryTimer, this, &ATDSCharacter::EndStaminaRecovery, 10.0f, false);
@@ -474,7 +499,7 @@ void ATDSCharacter::EndStaminaRecovery()
 	bIsRecoveringStamina = false; 
 	MovementState = EMovementState::Run_State;
 	CharacterUpdate(); 
-}
+}*/
 
 void ATDSCharacter::TrySwitchNextWeapon()
 {
