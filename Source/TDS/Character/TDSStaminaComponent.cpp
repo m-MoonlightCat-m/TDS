@@ -62,6 +62,8 @@ void UTDSStaminaComponent::UpdateStaminaValue(float StaminaValue)
 			if (Charecter)
 			{
 				Charecter->SetCanSprint(false);
+				Charecter->WalkEnable = true;
+				Charecter->ChangeMovementState();
 			}
 		}
 	}
@@ -88,6 +90,8 @@ void UTDSStaminaComponent::RecoveryStamina()
 		Stamina = tmp;
 
 	Charecter->SetCanSprint(true);
+	Charecter->WalkEnable = false;
+	Charecter->ChangeMovementState();
 
 	OnStaminaChange.Broadcast(Stamina);
 }
@@ -95,6 +99,9 @@ void UTDSStaminaComponent::RecoveryStamina()
 void UTDSStaminaComponent::CoolDawnStaminaEnd()
 {
 	if (GetWorld())
+	{
 		GetWorld()->GetTimerManager().SetTimer(TimerHandle_StaminaRecoveryRateTimer, this, &UTDSStaminaComponent::RecoveryStamina, StaminaRecoveryRate, true);
+	}
+		
 }
 

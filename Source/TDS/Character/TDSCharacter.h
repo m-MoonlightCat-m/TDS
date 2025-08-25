@@ -139,14 +139,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
 	bool bIsSprint = false;
-	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
-	float StaminaCoast = 10.0f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
-	float RegenerationStaminaRate = 5.0f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
-	float Stamina;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
-	float MaxStamina;*/
+
 
 	void UpdateStamina(float DeltaTime);
 	void SetCanSprint(bool bNewCanSprint);
@@ -154,11 +147,6 @@ public:
 	FVector LastDirection;
 	bool bCanSprint = true;
 
-	/*FTimerHandle StaminaRecoveryTimer;  
-	bool bIsRecoveringStamina;
-
-	void StartStaminaRecovery();
-	void EndStaminaRecovery();*/
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
 	int32 CurrentIndexWeapon = 0;

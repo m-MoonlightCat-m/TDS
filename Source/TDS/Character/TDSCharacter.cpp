@@ -159,14 +159,14 @@ void ATDSCharacter::MovementTick(float DeltaTime)
 		AddMovementInput(FVector(1.0f, 0.0f, 0.0f), AxisX);
 		AddMovementInput(FVector(0.0f, 1.0f, 0.0f), AxisY);
 
-		if (MovementState == EMovementState::SptintRun_State)
+		/*if (MovementState == EMovementState::SptintRun_State)
 		{
 			FVector myRotationVector = FVector(AxisX, AxisY, 0.0f);
 			FRotator myRotator = myRotationVector.ToOrientationRotator();
 			SetActorRotation(FQuat(myRotator));
 		}
 		else
-		{
+		{*/
 			APlayerController* myController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 			if (myController)
 			{
@@ -207,7 +207,7 @@ void ATDSCharacter::MovementTick(float DeltaTime)
 					CurrentWeapon->ShootEndLocation = ResultHit.Location + Displacement;
 				}
 			}
-		}
+		//}
 	}		
 }
 
@@ -434,7 +434,6 @@ void ATDSCharacter::StartSprint()
 		SprintRunEnable = false;
 		ChangeMovementState();
 	}
-	//if (bIsSprint) return;
 }
 
 void ATDSCharacter::StopSprint()
@@ -455,26 +454,10 @@ void ATDSCharacter::UpdateStamina(float DeltaTime)
 		{
 			bIsSprint = false;
 			SprintRunEnable = false;
+			WalkEnable = true;
 			ChangeMovementState();
 		}
-		/*Stamina = FMath::Clamp(Stamina - Stamina * DeltaTime, 0.0f, MaxStamina);
-		if (static_cast<int>(Stamina) <= 0 && !bIsRecoveringStamina)
-		{
-			Stamina = 0.0f;
-			StopSprint();
-			StartStaminaRecovery();
-		}
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Stamina Decreas %f"), Stamina));*/
 	}
-	/*else
-	{
-		if (Stamina < MaxStamina)
-		{
-			Stamina += RegenerationStaminaRate * DeltaTime;
-			Stamina = FMath::Min(Stamina, MaxStamina);
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Stamina Decreas %f"), Stamina));
-		}
-	}*/
 }
 
 void ATDSCharacter::SetCanSprint(bool bNewCanSprint)
@@ -488,18 +471,6 @@ void ATDSCharacter::SetCanSprint(bool bNewCanSprint)
 	}
 }
 
-/*void ATDSCharacter::StartStaminaRecovery()
-{
-	bIsRecoveringStamina = true; 
-	GetWorld()->GetTimerManager().SetTimer(StaminaRecoveryTimer, this, &ATDSCharacter::EndStaminaRecovery, 10.0f, false);
-}
-
-void ATDSCharacter::EndStaminaRecovery()
-{
-	bIsRecoveringStamina = false; 
-	MovementState = EMovementState::Run_State;
-	CharacterUpdate(); 
-}*/
 
 void ATDSCharacter::TrySwitchNextWeapon()
 {
