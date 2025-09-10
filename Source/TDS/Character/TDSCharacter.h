@@ -6,17 +6,19 @@
 #include "GameFramework/Character.h"
 #include "../GameCatalog/TDSPlayerController.h"
 #include "Components/InputComponent.h"
-
 #include "../FuncLibrary/TDSTypes.h"
 #include "../GameCatalog/TDSGameInstance.h"
 #include "../Weapons/WeaponDefault.h"
 #include "../Character/TDSInventoryComponent.h"
 #include "../Character/TDSCharacterHealthComponent.h"
+#include "../Interface/TDS_IntrfcGameActor.h"
+#include "../StateEffects/TDS_StateEffect.h"
+#include "Engine/DamageEvents.h"
 #include "TDSCharacter.generated.h"
 
 
 UCLASS(Blueprintable)
-class ATDSCharacter : public ACharacter
+class ATDSCharacter : public ACharacter, public ITDS_IntrfcGameActor
 {
 	GENERATED_BODY()
 
@@ -60,9 +62,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cursor")
 	FVector CursorSize = FVector(20.0f, 40.0f, 40.0f);
 
+	//Movement
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	EMovementState MovementState = EMovementState::Walk_State;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	FCharacterSpeed MovementInfo;
 
@@ -78,13 +80,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	TArray<UAnimMontage*> DeadsAnim;
 
+	
+	//Weapon
 	AWeaponDefault* CurrentWeapon = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Demo")
-	FName InitWeaponName;
-
 	UDecalComponent* CurrentCursor = nullptr;
 
+	//Effect
+	TArray<UTDS_StateEffect*> Effects;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+	TSubclassOf<UTDS_StateEffect> AbilityEffect;
+
+	//Inputs
 	UFUNCTION()
 	void InputAxisY(float value);
 	UFUNCTION()
@@ -97,8 +104,11 @@ public:
 	float AxisX = 0.0f;
 	float AxisY = 0.0f;
 
+	//Tick Func
 	UFUNCTION()
 	void MovementTick(float DeltaTime);
+
+	//Func
 	UFUNCTION()
 	void AttackCharEvent(bool bIsFiring);
 
@@ -131,6 +141,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	UDecalComponent* GetCursorToWorld();
 
+	//Sprint
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void StartSprint();
 
@@ -146,13 +157,24 @@ public:
 
 	FVector LastDirection;
 	bool bCanSprint = true;
+	//EndSprint
 
-
+	//Inventory Func
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
 	int32 CurrentIndexWeapon = 0;
 
 	void TrySwitchNextWeapon();
 	void TrySwitchPreviosWeapon();
+
+	//Ability Func
+	void TryAbilityEnabled();
+
+	//Interface
+	EPhysicalSurface GetSurfaceType() override;
+	TArray<UTDS_StateEffect*> GetAllCurrentEffects() override;
+	void AddEffect(UTDS_StateEffect* newEffect) override;
+	void RemoveEffect(UTDS_StateEffect* RemoveEffect) override;
+	//EndInterface
 
 	UFUNCTION(BlueprintCallable)
 	void CharDead();

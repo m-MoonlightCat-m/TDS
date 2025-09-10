@@ -7,6 +7,7 @@
 #include "Chaos/ChaosEngineInterface.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "NiagaraSystem.h" 
+#include "../StateEffects/TDS_StateEffect.h"
 
 #include "TDSTypes.generated.h"
 
@@ -84,6 +85,8 @@ struct FProjectileInfo
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FX")
 	TMap<TEnumAsByte<EPhysicalSurface>, UNiagaraSystem*> HitFXs;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect")
+	TSubclassOf<UTDS_StateEffect> Effect = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Explode")
 	UNiagaraSystem* ExplodeFX = nullptr;
@@ -295,4 +298,9 @@ UCLASS()
 class TDS_API UTypes : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
+
+public:
+
+	UFUNCTION(BlueprintCallable)
+	static void AddEffectBySurfaceType(AActor* TakeEffectAtctor, TSubclassOf<UTDS_StateEffect> AddEffectClass, EPhysicalSurface SurfaceType);
 };

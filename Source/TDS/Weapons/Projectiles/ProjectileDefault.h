@@ -29,7 +29,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Component")
 	class UNiagaraComponent* BulletFX	= nullptr;
 
-
+	UPROPERTY(BlueprintReadOnly)
 	FProjectileInfo ProjectileSetting;
 
 protected:

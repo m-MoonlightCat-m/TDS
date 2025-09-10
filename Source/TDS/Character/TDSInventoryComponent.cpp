@@ -62,13 +62,11 @@ void UTDSInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 bool UTDSInventoryComponent::SwitchWeaponToIndex(int32 ChangeToIndex, int32 OldIndex, FAdditionalWeaponInfo OldInfo, bool bIsForward)
 {
-	int8 NumSlots = WeaponSlot.Num();
+	int32 NumSlots = WeaponSlot.Num();
 	if (NumSlots == 0)
 		return false;
 
-	int8 StartIndex = ChangeToIndex;
-	int8 CorrectIndex = ChangeToIndex;
-
+	int32 CorrectIndex = ChangeToIndex;
 	if (ChangeToIndex >= NumSlots) 
 		CorrectIndex = 0;
 	else if (ChangeToIndex < 0) 
@@ -77,6 +75,7 @@ bool UTDSInventoryComponent::SwitchWeaponToIndex(int32 ChangeToIndex, int32 OldI
 	if (WeaponSlot[CorrectIndex].NameItem.IsNone() || WeaponSlot[CorrectIndex].AdditionalInfo.Round == 0)
 	{
 		int8 CheckedSlots = 0;
+		int8 StartIndex = ChangeToIndex;
 		bool bFoundSuitableWeapon = false;
 
 		while (CheckedSlots < NumSlots)
@@ -135,8 +134,11 @@ bool UTDSInventoryComponent::SwitchWeaponToIndex(int32 ChangeToIndex, int32 OldI
 
 	if (bHasAmmoOrRound)
 	{
-		// Proceed with switching
-		SetAdditionalInfoWeapon(OldIndex, OldInfo);
+		if (OldIndex >= 0 && WeaponSlot.IsValidIndex(OldIndex))
+		{
+			SetAdditionalInfoWeapon(OldIndex, OldInfo);
+		}
+		
 		OnSwitchWeapon.Broadcast(NewIdWeapon, NewAdditionalInfo, CorrectIndex);
 		return true;
 	}
@@ -284,7 +286,7 @@ bool UTDSInventoryComponent::CheckCanTakeAmmo(EWeaponType AmmoType)
 	return result;
 }
 
-bool UTDSInventoryComponent::CheckCanTakeWeapon(int32 FreeSlot)
+bool UTDSInventoryComponent::CheckCanTakeWeapon(int32& FreeSlot)
 {
 	bool bIsFreeSlot = false;
 	int8 i = 0;
@@ -319,7 +321,7 @@ bool UTDSInventoryComponent::SwitchWeaponToInventory(FWeaponSlot NewWeapon, int3
 
 bool UTDSInventoryComponent::TryGetWeaponToInventory(FWeaponSlot NewWeapon)
 {
-	int8 indexSlot = -1;
+	int32 indexSlot = -1;
 	if (CheckCanTakeWeapon(indexSlot))
 	{
 		if (WeaponSlot.IsValidIndex(indexSlot))

@@ -261,6 +261,11 @@ void AWeaponDefault::Fire()
 					if (WeaponSetting.ProjectileSetting.HitSound)
 						UGameplayStatics::PlaySoundAtLocation(GetWorld(), WeaponSetting.ProjectileSetting.HitSound, HitResult.ImpactPoint);
 
+
+
+					UTypes::AddEffectBySurfaceType(HitResult.GetActor(), ProjectileInfo.Effect, mySurfaceType);
+					
+
 					UGameplayStatics::ApplyDamage(HitResult.GetActor(), WeaponSetting.ProjectileSetting.ProjectileDamage, GetInstigatorController(), this, NULL);
 				}
 			}

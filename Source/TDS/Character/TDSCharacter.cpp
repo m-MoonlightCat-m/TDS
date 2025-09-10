@@ -19,6 +19,7 @@
 #include "../GameCatalog/TDSGameInstance.h"
 #include "TDSCharacterHealthComponent.h"
 #include "TDSStaminaComponent.h"
+#include "../Weapons/Projectiles/ProjectileDefault.h"
 
 
 ATDSCharacter::ATDSCharacter()
@@ -111,6 +112,8 @@ void ATDSCharacter::SetupPlayerInputComponent(UInputComponent* NewInputComponent
 
 	NewInputComponent->BindAction(TEXT("SwitchNextWeapon"), EInputEvent::IE_Pressed, this, &ATDSCharacter::TrySwitchNextWeapon);
 	NewInputComponent->BindAction(TEXT("SwitchPreviosWeapon"), EInputEvent::IE_Pressed, this, &ATDSCharacter::TrySwitchPreviosWeapon);
+
+	NewInputComponent->BindAction(TEXT("AbilityAction"), EInputEvent::IE_Pressed, this, &ATDSCharacter::TryAbilityEnabled);
 }
 
 void ATDSCharacter::BeginPlay()
@@ -530,6 +533,54 @@ void ATDSCharacter::TrySwitchPreviosWeapon()
 	}
 }
 
+void ATDSCharacter::TryAbilityEnabled()
+{
+	if (AbilityEffect)
+	{
+		UTDS_StateEffect* NewEffect = NewObject<UTDS_StateEffect>(this, AbilityEffect);
+		if (NewEffect)
+			NewEffect->InitObject(this);
+	}
+}
+
+EPhysicalSurface ATDSCharacter::GetSurfaceType()
+{
+	EPhysicalSurface Result = EPhysicalSurface::SurfaceType_Default;
+
+	if (CharHealthComponent)
+	{
+		if (CharHealthComponent->GetCurrentShield() <= 0)
+		{
+			if (GetMesh())
+			{
+				UMaterialInterface* myMaterial = GetMesh()->GetMaterial(0);
+				if (myMaterial)
+				{
+					Result = myMaterial->GetPhysicalMaterial()->SurfaceType;
+				}
+			}
+		}
+	}
+
+
+	return Result;
+}
+
+TArray<UTDS_StateEffect*> ATDSCharacter::GetAllCurrentEffects()
+{
+	return Effects;
+}
+
+void ATDSCharacter::AddEffect(UTDS_StateEffect* newEffect)
+{
+	Effects.Add(newEffect);
+}
+
+void ATDSCharacter::RemoveEffect(UTDS_StateEffect* RemoveEffect)
+{
+	Effects.Remove(RemoveEffect);
+}
+
 void ATDSCharacter::CharDead()
 {
 	float TimeAnim = 0.0f;
@@ -566,6 +617,21 @@ float ATDSCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEv
 
 	if (bIsAlive)
 		CharHealthComponent->ChangeHealthValue(-DamageAmount);
+
+	if (DamageEvent.IsOfType(FRadialDamageEvent::ClassID))
+	{
+		AProjectileDefault* myProjectile = Cast<AProjectileDefault>(DamageCauser);
+		if (myProjectile)
+		{
+			UTypes::AddEffectBySurfaceType(this, myProjectile->ProjectileSetting.Effect, GetSurfaceType());
+		}
+	}
+
+	//ITDS_IntrfcGameActor* myInterface = Cast <ITDS_IntrfcGameActor>(HitResult.GetActor());
+	//if (myInterface)
+	//{
+	//	UTypes::AddEffectBySurfaceType(HitResult.GetActor(), ProjectileInfo.Effect, mySurfaceType);
+	//}
 
 	return ActualDamage;
 }
