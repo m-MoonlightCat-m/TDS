@@ -42,15 +42,30 @@ void UTDSHealthComponent::SetCurrentHealth(float NewHealth)
 	Health = NewHealth;
 }
 
+float UTDSHealthComponent::GetMaxHealth()
+{
+	return MaxHealth;
+}
+
+void UTDSHealthComponent::SetMaxHealth(float NewMaxHealth)
+{
+	MaxHealth = NewMaxHealth;
+}
+
 void UTDSHealthComponent::ChangeHealthValue(float ChangeValue)
 {
+	if (bIsImmunToDamage)
+	{
+		return;
+	}
+
 	ChangeValue = ChangeValue * CoefDamage;
 
 	Health += ChangeValue;
 
-	if (Health > 100.0f)
+	if (Health > MaxHealth)
 	{
-		Health = 100.0f;
+		Health = MaxHealth;
 	}
 	else
 	{

@@ -5,6 +5,11 @@
 
 void UTDSCharacterHealthComponent::ChangeHealthValue(float ChangeValue)
 {
+	if (bIsImmunToDamage)
+	{
+		return;
+	}
+
 	float CurrentDamage = ChangeValue * CoefDamage;
 		
 	if (Shield > 0.0f && ChangeValue < 0.0f)

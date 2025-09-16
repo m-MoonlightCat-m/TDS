@@ -90,6 +90,14 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	TSubclassOf<UTDS_StateEffect> AbilityEffect;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+	TSubclassOf<UTDS_StateEffect> HealthBoostEffect;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+	TSubclassOf<UTDS_StateEffect> ImmunityEffect;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+	TSubclassOf<UTDS_StateEffect> StunEffect;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+	TSubclassOf<UTDS_StateEffect> AuraDamageEffect;
 
 	//Inputs
 	UFUNCTION()
@@ -103,6 +111,8 @@ public:
 
 	float AxisX = 0.0f;
 	float AxisY = 0.0f;
+
+	bool bIsStuned = false;
 
 	//Tick Func
 	UFUNCTION()
@@ -168,6 +178,10 @@ public:
 
 	//Ability Func
 	void TryAbilityEnabled();
+	void TryHealthBoostEnabled();
+	void TryImmunityEnabled();
+	void TryStunEnabled();
+	void TryAuraDamageEnabled();
 
 	//Interface
 	EPhysicalSurface GetSurfaceType() override;

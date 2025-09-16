@@ -65,9 +65,6 @@ ATDSCharacter::ATDSCharacter()
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
-
-	/*MaxStamina = 100.0f;
-	Stamina = MaxStamina;*/
 }
 
 void ATDSCharacter::Tick(float DeltaSeconds)
@@ -114,6 +111,10 @@ void ATDSCharacter::SetupPlayerInputComponent(UInputComponent* NewInputComponent
 	NewInputComponent->BindAction(TEXT("SwitchPreviosWeapon"), EInputEvent::IE_Pressed, this, &ATDSCharacter::TrySwitchPreviosWeapon);
 
 	NewInputComponent->BindAction(TEXT("AbilityAction"), EInputEvent::IE_Pressed, this, &ATDSCharacter::TryAbilityEnabled);
+	NewInputComponent->BindAction(TEXT("AbilityAction2"), EInputEvent::IE_Pressed, this, &ATDSCharacter::TryHealthBoostEnabled);
+	NewInputComponent->BindAction(TEXT("AbilityAction3"), EInputEvent::IE_Pressed, this, &ATDSCharacter::TryImmunityEnabled);
+	NewInputComponent->BindAction(TEXT("AbilityAction4"), EInputEvent::IE_Pressed, this, &ATDSCharacter::TryStunEnabled);
+	NewInputComponent->BindAction(TEXT("AbilityAction5"), EInputEvent::IE_Pressed, this, &ATDSCharacter::TryAuraDamageEnabled);
 }
 
 void ATDSCharacter::BeginPlay()
@@ -133,7 +134,6 @@ void ATDSCharacter::InputAxisY(float value)
 
 void ATDSCharacter::InputAxisX(float value)
 {
-	//AxisX = value;
 	if (bIsSprint)
 	{
 		FVector ForwardVector = GetActorForwardVector();
@@ -162,55 +162,48 @@ void ATDSCharacter::MovementTick(float DeltaTime)
 		AddMovementInput(FVector(1.0f, 0.0f, 0.0f), AxisX);
 		AddMovementInput(FVector(0.0f, 1.0f, 0.0f), AxisY);
 
-		/*if (MovementState == EMovementState::SptintRun_State)
+		APlayerController* myController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+		if (myController)
 		{
-			FVector myRotationVector = FVector(AxisX, AxisY, 0.0f);
-			FRotator myRotator = myRotationVector.ToOrientationRotator();
-			SetActorRotation(FQuat(myRotator));
-		}
-		else
-		{*/
-			APlayerController* myController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-			if (myController)
-			{
-				FHitResult ResultHit;
-				//myController->GetHitResultUnderCursorByChannel(ETraceTypeQuery::TraceTypeQuery6, false, ResultHit);
-				myController->GetHitResultUnderCursor(ECC_GameTraceChannel1, true, ResultHit);
+			FHitResult ResultHit;
+			myController->GetHitResultUnderCursor(ECC_GameTraceChannel1, true, ResultHit);
 
+			if (!bIsStuned)
+			{
 				float FindRotatorResultYaw = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ResultHit.Location).Yaw;
 				SetActorRotation(FQuat(FRotator(0.0f, FindRotatorResultYaw, 0.0f)));
-
-				if (CurrentWeapon)
-				{
-					FVector Displacement = FVector(0);
-					switch (MovementState)
-					{
-					case EMovementState::Aim_State:
-						Displacement = FVector(0.0f, 0.0f, 160.0f);
-						CurrentWeapon->ShouldReduceDispersion = true;
-						break;
-					case EMovementState::AimWalk_State:
-						Displacement = FVector(0.0f, 0.0f, 160.0f);
-						CurrentWeapon->ShouldReduceDispersion = true;
-						break;
-					case EMovementState::Walk_State:
-						Displacement = FVector(0.0f, 0.0f, 120.0f);
-						CurrentWeapon->ShouldReduceDispersion = false;
-						break;
-					case EMovementState::Run_State:
-						Displacement = FVector(0.0f, 0.0f, 120.0f);
-						CurrentWeapon->ShouldReduceDispersion = false;
-						break;
-					case EMovementState::SptintRun_State:
-						break;
-					default:
-						break;
-					}
-
-					CurrentWeapon->ShootEndLocation = ResultHit.Location + Displacement;
-				}
 			}
-		//}
+			
+			if (CurrentWeapon)
+			{
+				FVector Displacement = FVector(0);
+				switch (MovementState)
+				{
+				case EMovementState::Aim_State:
+					Displacement = FVector(0.0f, 0.0f, 160.0f);
+					CurrentWeapon->ShouldReduceDispersion = true;
+					break;
+				case EMovementState::AimWalk_State:
+					Displacement = FVector(0.0f, 0.0f, 160.0f);
+					CurrentWeapon->ShouldReduceDispersion = true;
+					break;
+				case EMovementState::Walk_State:
+					Displacement = FVector(0.0f, 0.0f, 120.0f);
+					CurrentWeapon->ShouldReduceDispersion = false;
+					break;
+				case EMovementState::Run_State:
+					Displacement = FVector(0.0f, 0.0f, 120.0f);
+					CurrentWeapon->ShouldReduceDispersion = false;
+					break;
+				case EMovementState::SptintRun_State:
+					break;
+				default:
+					break;
+				}
+
+				CurrentWeapon->ShootEndLocation = ResultHit.Location + Displacement;
+			}
+		}
 	}		
 }
 
@@ -335,15 +328,13 @@ void ATDSCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponA
 					CurrentWeapon = myWeapon;
 
 					myWeapon->WeaponSetting = myWeaponInfo;
-					//myWeapon->AdditionalWeaponInfo.Round = myWeaponInfo.MaxRound;
 
 					//!!!DEBUG!!!!
 					myWeapon->ReloadTime = myWeaponInfo.ReloadTime;
 					myWeapon->UpdateStateWeapon(MovementState);
 
 					myWeapon->AdditionalWeaponInfo = WeaponAdditionalInfo;
-					//if (InventoryComponent)
-						CurrentIndexWeapon = NewCurrentIndexWeapon;
+					CurrentIndexWeapon = NewCurrentIndexWeapon;
 
 					myWeapon->OnWeaponReloadStart.AddDynamic(this, &ATDSCharacter::WeaponReloadStart);
 					myWeapon->OnWeaponReloadEnd.AddDynamic(this, &ATDSCharacter::WeaponReloadEnd);
@@ -543,6 +534,46 @@ void ATDSCharacter::TryAbilityEnabled()
 	}
 }
 
+void ATDSCharacter::TryHealthBoostEnabled()
+{
+	if (HealthBoostEffect)
+	{
+		UTDS_StateEffect* NewEffect = NewObject<UTDS_StateEffect>(this, HealthBoostEffect);
+		if (NewEffect)
+			NewEffect->InitObject(this);
+	}
+}
+
+void ATDSCharacter::TryImmunityEnabled()
+{
+	if (ImmunityEffect)
+	{
+		UTDS_StateEffect* NewEffect = NewObject<UTDS_StateEffect>(this, ImmunityEffect);
+		if (NewEffect)
+			NewEffect->InitObject(this);
+	}
+}
+
+void ATDSCharacter::TryStunEnabled()
+{
+	if (StunEffect)
+	{
+		UTDS_StateEffect* NewEffect = NewObject<UTDS_StateEffect>(this, StunEffect);
+		if (NewEffect)
+			NewEffect->InitObject(this);
+	}
+}
+
+void ATDSCharacter::TryAuraDamageEnabled()
+{
+	if (AuraDamageEffect)
+	{
+		UTDS_StateEffect* NewEffect = NewObject<UTDS_StateEffect>(this, AuraDamageEffect);
+		if (NewEffect)
+			NewEffect->InitObject(this);
+	}
+}
+
 EPhysicalSurface ATDSCharacter::GetSurfaceType()
 {
 	EPhysicalSurface Result = EPhysicalSurface::SurfaceType_Default;
@@ -626,12 +657,6 @@ float ATDSCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEv
 			UTypes::AddEffectBySurfaceType(this, myProjectile->ProjectileSetting.Effect, GetSurfaceType());
 		}
 	}
-
-	//ITDS_IntrfcGameActor* myInterface = Cast <ITDS_IntrfcGameActor>(HitResult.GetActor());
-	//if (myInterface)
-	//{
-	//	UTypes::AddEffectBySurfaceType(HitResult.GetActor(), ProjectileInfo.Effect, mySurfaceType);
-	//}
 
 	return ActualDamage;
 }

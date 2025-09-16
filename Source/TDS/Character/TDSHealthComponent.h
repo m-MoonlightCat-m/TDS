@@ -36,7 +36,8 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-	float Health = 100.0f;
+	float MaxHealth = 100.0f;
+	float Health = MaxHealth;
 
 public:	
 	// Called every frame
@@ -51,10 +52,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Health")
 	void SetCurrentHealth(float NewHealth);
 
-	
+	UFUNCTION(BlueprintCallable, Category = "Health")
+	float GetMaxHealth();
+
+	UFUNCTION(BlueprintCallable, Category = "Health")
+	void SetMaxHealth(float NewMaxHealth);
 
 	UFUNCTION(BlueprintCallable, Category = "Health")
 	virtual void ChangeHealthValue(float ChangeValue);
 
-	
+	bool bIsImmunToDamage = false;
 };
