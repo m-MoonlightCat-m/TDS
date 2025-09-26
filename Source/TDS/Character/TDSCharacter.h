@@ -80,10 +80,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	TArray<UAnimMontage*> DeadsAnim;
 
-	
-	//Weapon
-	AWeaponDefault* CurrentWeapon = nullptr;
-	UDecalComponent* CurrentCursor = nullptr;
 
 	//Effect
 	TArray<UTDS_StateEffect*> Effects;
@@ -128,6 +124,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ChangeMovementState();
 
+
+	//Weapon
+	AWeaponDefault* CurrentWeapon = nullptr;
+	
 	UFUNCTION(BlueprintCallable)
 	AWeaponDefault* GetCurrentWeapon();
 	UFUNCTION()
@@ -140,6 +140,10 @@ public:
 	void WeaponReloadEnd(bool bIsSuccess, int32 AmmoTake);
 	UFUNCTION()
 	void WeaponFireStart(UAnimMontage* Anim);
+	UFUNCTION()
+	bool TrySwitchWeaponToIndexByKeyInput(int32 ToIndex);
+	UFUNCTION()
+	void DropCurrentWeapon();
 	UFUNCTION(BlueprintNativeEvent)
 	void WeaponReloadStart_BP(UAnimMontage* Anim);
 	UFUNCTION(BlueprintNativeEvent)
@@ -147,6 +151,8 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void WeaponFireStart_BP(UAnimMontage* Anim);
 
+	//Cursor
+	UDecalComponent* CurrentCursor = nullptr;
 
 	UFUNCTION(BlueprintCallable)
 	UDecalComponent* GetCursorToWorld();
@@ -169,19 +175,25 @@ public:
 	bool bCanSprint = true;
 	//EndSprint
 
-	//Inventory Func
+	//Inventory Inputs
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
 	int32 CurrentIndexWeapon = 0;
 
 	void TrySwitchNextWeapon();
 	void TrySwitchPreviosWeapon();
 
-	//Ability Func
+	//Ability Inputs
 	void TryAbilityEnabled();
 	void TryHealthBoostEnabled();
 	void TryImmunityEnabled();
 	void TryStunEnabled();
 	void TryAuraDamageEnabled();
+
+	template <int32 Id>
+	void TKeyPressed()
+	{
+		TrySwitchWeaponToIndexByKeyInput(Id);
+	}
 
 	//Interface
 	EPhysicalSurface GetSurfaceType() override;

@@ -41,6 +41,8 @@ public:
 	class UArrowComponent* ShootLocation = nullptr;
 
 	UPROPERTY()
+	FName IdWeaponName;
+	UPROPERTY()
 	FWeaponInfo WeaponSetting;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Info")
 	FAdditionalWeaponInfo AdditionalWeaponInfo;

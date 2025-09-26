@@ -146,7 +146,7 @@ void AWeaponDefault::WeaponInit()
 		StaticMeshWeapon->DestroyComponent();
 	}
 
-	ReloadTime = WeaponSetting.ReloadTime;
+	//ReloadTime = WeaponSetting.ReloadTime;
 
 	UpdateStateWeapon(EMovementState::Run_State);
 }
@@ -451,6 +451,11 @@ bool AWeaponDefault::CheckCanWeaponReload()
 			if (!MyInv->CheckAmmoForWeapon(WeaponSetting.WeaponType, AviableAmmoForWeapon))
 			{
 				result = false;
+				MyInv->OnWeaponNotHaveRound.Broadcast(MyInv->GetWeaponIndexSlotByName(IdWeaponName));
+			}
+			else
+			{
+				MyInv->OnWeaponHaveRound.Broadcast(MyInv->GetWeaponIndexSlotByName(IdWeaponName));
 			}
 		}
 	}

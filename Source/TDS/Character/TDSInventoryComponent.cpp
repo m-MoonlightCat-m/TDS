@@ -3,6 +3,7 @@
 
 #include "TDSInventoryComponent.h"
 #include "../GameCatalog/TDSGameInstance.h"
+#include "../Interface/TDS_IntrfcGameActor.h"
 
 // Sets default values for this component's properties
 UTDSInventoryComponent::UTDSInventoryComponent()
@@ -32,11 +33,6 @@ void UTDSInventoryComponent::BeginPlay()
 				FWeaponInfo Info;
 				if (myGI->GetWeaponInfoByName(WeaponSlot[i].NameItem, Info))
 					WeaponSlot[i].AdditionalInfo.Round = Info.MaxRound;
-				/*else
-				{
-					WeaponSlot.RemoveAt(i);
-					i--;
-				}*/
 			}
 		}
 	}
@@ -60,7 +56,7 @@ void UTDSInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	// ...
 }
 
-bool UTDSInventoryComponent::SwitchWeaponToIndex(int32 ChangeToIndex, int32 OldIndex, FAdditionalWeaponInfo OldInfo, bool bIsForward)
+bool UTDSInventoryComponent::SwitchWeaponToIndexByNextPreviosIndex(int32 ChangeToIndex, int32 OldIndex, FAdditionalWeaponInfo OldInfo, bool bIsForward)
 {
 	int32 NumSlots = WeaponSlot.Num();
 	if (NumSlots == 0)
@@ -147,6 +143,36 @@ bool UTDSInventoryComponent::SwitchWeaponToIndex(int32 ChangeToIndex, int32 OldI
 	return false;
 }
 
+bool UTDSInventoryComponent::SwitchWeaponByIndex(int32 IndexWeaponToChange, int32 PreviosIndex, FAdditionalWeaponInfo PreviosWeaponInfo)
+{
+	bool bIsSuccess = false;
+	FName ToSwitchIdWeapon;
+	FAdditionalWeaponInfo ToSwitchAdditionalInfo;
+
+	ToSwitchIdWeapon = GetWeaponNameBySlotIndex(IndexWeaponToChange);
+	ToSwitchAdditionalInfo = GetAdditionalInfoWeapon(IndexWeaponToChange);
+
+	if (!ToSwitchIdWeapon.IsNone())
+	{
+		SetAdditionalInfoWeapon(PreviosIndex, PreviosWeaponInfo);
+		OnSwitchWeapon.Broadcast(ToSwitchIdWeapon, ToSwitchAdditionalInfo, IndexWeaponToChange);
+
+		EWeaponType ToSwitchWeaponType;
+		if (GetWeaponTypeByNameWeapon(ToSwitchIdWeapon, ToSwitchWeaponType))
+		{
+			int8 AviableAmmoForWeapom = -1;
+			if (CheckAmmoForWeapon(ToSwitchWeaponType, AviableAmmoForWeapom))
+			{
+
+			}
+		}
+
+		bIsSuccess = true;
+	}
+
+	return bIsSuccess;
+}
+
 
 FAdditionalWeaponInfo UTDSInventoryComponent::GetAdditionalInfoWeapon(int32 IndexWeapon)
 {
@@ -157,7 +183,7 @@ FAdditionalWeaponInfo UTDSInventoryComponent::GetAdditionalInfoWeapon(int32 Inde
 		int8 i = 0;
 		while (i < WeaponSlot.Num() && !bIsFind)
 		{
-			if (/*WeaponSlot[i].IndexSlot*/i == IndexWeapon)
+			if (i == IndexWeapon)
 			{
 				result = WeaponSlot[i].AdditionalInfo;
 				bIsFind = true;
@@ -183,7 +209,7 @@ int32 UTDSInventoryComponent::GetWeaponIndexSlotByName(FName IdWeaponName)
 		if (WeaponSlot[i].NameItem == IdWeaponName)
 		{
 			bIsFind = true;
-			result = i/*WeaponSlot[i].IndexSlot*/;
+			result = i;
 		}
 		i++;
 	}
@@ -203,6 +229,43 @@ FName UTDSInventoryComponent::GetWeaponNameBySlotIndex(int32 IndexSlot)
 	return result;
 }
 
+bool UTDSInventoryComponent::GetWeaponTypeByIndexSlot(int32 IndexSlot, EWeaponType& WeaponType)
+{
+	bool bIsFind = false;
+	FWeaponInfo OutInfo;
+	WeaponType = EWeaponType::RifleMKType;
+	UTDSGameInstance* myGI = Cast<UTDSGameInstance>(GetWorld()->GetGameInstance());
+	
+	if (myGI)
+	{
+		if (WeaponSlot.IsValidIndex(IndexSlot))
+		{
+			myGI->GetWeaponInfoByName(WeaponSlot[IndexSlot].NameItem, OutInfo);
+			WeaponType = OutInfo.WeaponType;
+			bIsFind = true;
+		}
+	}
+
+	return bIsFind;
+}
+
+bool UTDSInventoryComponent::GetWeaponTypeByNameWeapon(FName IdWeaponName, EWeaponType& WeaponType)
+{
+	bool bIsFind = false;
+	FWeaponInfo OutInfo;
+	WeaponType = EWeaponType::RifleMKType;
+	UTDSGameInstance* myGI = Cast<UTDSGameInstance>(GetWorld()->GetGameInstance());
+
+	if (myGI)
+	{
+		myGI->GetWeaponInfoByName(IdWeaponName, OutInfo);
+		WeaponType = OutInfo.WeaponType;
+		bIsFind = true;
+	}
+
+	return bIsFind;
+}
+
 void UTDSInventoryComponent::SetAdditionalInfoWeapon(int32 IndexWeapon, FAdditionalWeaponInfo NewInfo)
 {
 	if (WeaponSlot.IsValidIndex(IndexWeapon))
@@ -211,7 +274,7 @@ void UTDSInventoryComponent::SetAdditionalInfoWeapon(int32 IndexWeapon, FAdditio
 		int8 i = 0;
 		while (i < WeaponSlot.Num() && !bIsFind)
 		{
-			if (/*WeaponSlot[i].IndexSlot*/i == IndexWeapon)
+			if (i == IndexWeapon)
 			{
 				WeaponSlot[i].AdditionalInfo = NewInfo;
 				bIsFind = true;
@@ -268,7 +331,10 @@ bool UTDSInventoryComponent::CheckAmmoForWeapon(EWeaponType TypeWeapon, int8 &Av
 		i++;
 	}
 
-	OnWeaponAmmoEmpty.Broadcast(TypeWeapon);
+	if (AviableAmmoForWeapon <= 0)
+		OnWeaponAmmoEmpty.Broadcast(TypeWeapon);
+	else
+		OnWeaponAmmoAviable.Broadcast(TypeWeapon);
 
 	return false;
 }
@@ -310,7 +376,7 @@ bool UTDSInventoryComponent::SwitchWeaponToInventory(FWeaponSlot NewWeapon, int3
 	{
 		WeaponSlot[IndexSlot] = NewWeapon;
 		
-		SwitchWeaponToIndex(CurrentIndexWeaponChar, -1, NewWeapon.AdditionalInfo, true);
+		SwitchWeaponToIndexByNextPreviosIndex(CurrentIndexWeaponChar, -1, NewWeapon.AdditionalInfo, true);
 		OnUpdateWeaponSlots.Broadcast(IndexSlot, NewWeapon);
 
 		result = true;
@@ -333,6 +399,48 @@ bool UTDSInventoryComponent::TryGetWeaponToInventory(FWeaponSlot NewWeapon)
 	}
 	
 	return false;
+}
+
+void UTDSInventoryComponent::DropWeaponByIndex(int32 ByIndex, FDropItem& DropItemInfo)
+{
+	FWeaponSlot EmptyWeaponSlot;
+
+	bool bIsCanDrop = false;
+	int8 i = 0;
+	int8 AviableWeaponNum = 0;
+
+	while (i < WeaponSlot.Num() && !bIsCanDrop)
+	{
+		if (!WeaponSlot[i].NameItem.IsNone())
+		{
+			AviableWeaponNum++;
+			if (AviableWeaponNum > 1)
+				bIsCanDrop = true;
+		}
+		i++;
+	}
+
+	if (bIsCanDrop && WeaponSlot.IsValidIndex(ByIndex) && GetDropItemInfoFromInventory(ByIndex, DropItemInfo))
+	{
+		GetDropItemInfoFromInventory(ByIndex, DropItemInfo);
+
+		bool bIsFindWeapon = false;
+		int8 j = 0;
+		while (j < WeaponSlot.Num() && !bIsFindWeapon)
+		{
+			if (!WeaponSlot[j].NameItem.IsNone())
+			{
+				OnSwitchWeapon.Broadcast(WeaponSlot[j].NameItem, WeaponSlot[j].AdditionalInfo, j);
+			}
+			j++;
+		}
+
+		WeaponSlot[ByIndex] = EmptyWeaponSlot;
+		if (GetOwner()->GetClass()->ImplementsInterface(UTDS_IntrfcGameActor::StaticClass()))
+			ITDS_IntrfcGameActor::Execute_DropWeaponToWorld(GetOwner(), DropItemInfo);
+
+		OnUpdateWeaponSlots.Broadcast(ByIndex, EmptyWeaponSlot);
+	}
 }
 
 bool UTDSInventoryComponent::GetDropItemInfoFromInventory(int32 IndexSlot, FDropItem& DropItemInfo)

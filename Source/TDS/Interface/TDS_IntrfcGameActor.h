@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
 #include "../StateEffects/TDS_StateEffect.h"
+#include "../FuncLibrary/TDSTypes.h"
 #include "TDS_IntrfcGameActor.generated.h"
 
 // This class does not need to be modified.
@@ -29,4 +30,9 @@ public:
 	virtual TArray<UTDS_StateEffect*> GetAllCurrentEffects();
 	virtual void AddEffect(UTDS_StateEffect* newEffect);
 	virtual void RemoveEffect(UTDS_StateEffect* RemoveEffect);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void DropWeaponToWorld(FDropItem DropItemInfo);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void DropAmmoToWorld(EWeaponType TypeAmmo, int32 Cout);
 };
