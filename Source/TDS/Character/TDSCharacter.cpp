@@ -423,7 +423,7 @@ void ATDSCharacter::WeaponFireStart(UAnimMontage* Anim)
 bool ATDSCharacter::TrySwitchWeaponToIndexByKeyInput(int32 ToIndex)
 {
 	bool bIsSuccess = false;
-	if (InventoryComponent->WeaponSlot.IsValidIndex(ToIndex))
+	if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->WeaponSlot.IsValidIndex(ToIndex))
 	{
 		if (CurrentIndexWeapon != ToIndex && InventoryComponent)
 		{
@@ -528,7 +528,27 @@ void ATDSCharacter::SetCanSprint(bool bNewCanSprint)
 
 void ATDSCharacter::TrySwitchNextWeapon()
 {
-	if (InventoryComponent->WeaponSlot.Num() > 1)
+	if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->WeaponSlot.Num() > 1)
+	{
+		//We have more then one weapon go switch
+		int8 OldIndex = CurrentIndexWeapon;
+		FAdditionalWeaponInfo OldInfo;
+		if (CurrentWeapon)
+		{
+			OldInfo = CurrentWeapon->AdditionalWeaponInfo;
+			if (CurrentWeapon->WeaponReloading)
+				CurrentWeapon->CancelReload();
+		}
+
+		if (InventoryComponent)
+		{
+			if (InventoryComponent->SwitchWeaponToIndexByNextPreviosIndex(CurrentIndexWeapon + 1, OldIndex, OldInfo, true))
+			{
+			}
+		}
+	}
+
+	/*if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->WeaponSlot.Num() > 1)
 	{
 		int8 OldIndex = CurrentIndexWeapon;
 		FAdditionalWeaponInfo OldInfo;
@@ -552,12 +572,32 @@ void ATDSCharacter::TrySwitchNextWeapon()
 				CurrentIndexWeapon = NewIndex;
 			}
 		}
-	}
+	}*/
 }
 
 void ATDSCharacter::TrySwitchPreviosWeapon()
 {
-	if (InventoryComponent->WeaponSlot.Num() > 1)
+
+	if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->WeaponSlot.Num() > 1)
+	{
+		//We have more then one weapon go switch
+		int8 OldIndex = CurrentIndexWeapon;
+		FAdditionalWeaponInfo OldInfo;
+		if (CurrentWeapon)
+		{
+			OldInfo = CurrentWeapon->AdditionalWeaponInfo;
+			if (CurrentWeapon->WeaponReloading)
+				CurrentWeapon->CancelReload();
+		}
+
+		if (InventoryComponent)
+		{
+			if (InventoryComponent->SwitchWeaponToIndexByNextPreviosIndex(CurrentIndexWeapon - 1, OldIndex, OldInfo, false))
+			{
+			}
+		}
+	}
+	/*if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->WeaponSlot.Num() > 1)
 	{
 		int8 OldIndex = CurrentIndexWeapon;
 		FAdditionalWeaponInfo OldInfo;
@@ -581,7 +621,7 @@ void ATDSCharacter::TrySwitchPreviosWeapon()
 				CurrentIndexWeapon = NewIndex;
 			}
 		}
-	}
+	}*/
 }
 
 void ATDSCharacter::TryAbilityEnabled()

@@ -12,7 +12,4 @@ Saved
 *.suo
 *.xcodeproj
 *.xcworkspace
-/Content/Enviroment
-/Content/Map
-/Content/MSPresets
-/Content/Sound
+

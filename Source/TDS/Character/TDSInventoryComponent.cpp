@@ -62,85 +62,100 @@ bool UTDSInventoryComponent::SwitchWeaponToIndexByNextPreviosIndex(int32 ChangeT
 	if (NumSlots == 0)
 		return false;
 
-	int32 CorrectIndex = ChangeToIndex;
-	if (ChangeToIndex >= NumSlots) 
-		CorrectIndex = 0;
-	else if (ChangeToIndex < 0) 
-			CorrectIndex = NumSlots - 1;
+	int32 CorrectIndex = (ChangeToIndex + NumSlots) % NumSlots;
 
-	if (WeaponSlot[CorrectIndex].NameItem.IsNone() || WeaponSlot[CorrectIndex].AdditionalInfo.Round == 0)
+	int32 NewIndex = -1;
+	bool bFound = false;
+
+	if (WeaponSlot.IsValidIndex(CorrectIndex) && !WeaponSlot[CorrectIndex].NameItem.IsNone())
 	{
-		int8 CheckedSlots = 0;
-		int8 StartIndex = ChangeToIndex;
-		bool bFoundSuitableWeapon = false;
+		bool bCanUseThisSlot = false;
 
-		while (CheckedSlots < NumSlots)
+		if (WeaponSlot[CorrectIndex].AdditionalInfo.Round > 0)
 		{
-			if (bIsForward)
+			bCanUseThisSlot = true;
+		}
+		else
+		{
+			UTDSGameInstance* GI = Cast<UTDSGameInstance>(GetWorld()->GetGameInstance());
+			if (GI)
 			{
-				StartIndex = (StartIndex + 1) % NumSlots;
-			
+				FWeaponInfo Info;
+				if (GI->GetWeaponInfoByName(WeaponSlot[CorrectIndex].NameItem, Info))
+				{
+					for (auto& Ammo : AmmoSlots)
+					{
+						if (Ammo.WeaponType == Info.WeaponType && Ammo.Cout > 0)
+						{
+							bCanUseThisSlot = true;
+							break;
+						}
+					}
+				}
 			}
-			else 
-			{
-				StartIndex = (StartIndex - 1  + NumSlots) % NumSlots;
-			}
-
-			if (!WeaponSlot[StartIndex].NameItem.IsNone() && WeaponSlot[StartIndex].AdditionalInfo.Round > 0)
-			{
-				CorrectIndex = StartIndex;
-				bFoundSuitableWeapon = true;
-				break;
-			}
-
-			CheckedSlots++;
 		}
 
-		if (!bFoundSuitableWeapon)
-			return false;
-	}
-
-	FName NewIdWeapon = WeaponSlot[CorrectIndex].NameItem;
-	FAdditionalWeaponInfo NewAdditionalInfo = WeaponSlot[CorrectIndex].AdditionalInfo;
-
-	bool bHasAmmoOrRound = false;
-
-	// Check if weapon has rounds
-	if (NewAdditionalInfo.Round > 0)
-	{
-		bHasAmmoOrRound = true;
-	}
-	else
-	{
-		// Check ammo availability
-		FWeaponInfo Info;
-		UTDSGameInstance* GI = Cast<UTDSGameInstance>(GetWorld()->GetGameInstance());
-		if (GI && GI->GetWeaponInfoByName(NewIdWeapon, Info))
+		if (bCanUseThisSlot)
 		{
-			for (auto& Ammo : AmmoSlots)
+			NewIndex = CorrectIndex;
+			bFound = true;
+		}
+	}
+
+	if (!bFound)
+	{
+		for (int32 i = 1; i < NumSlots && !bFound; ++i)
+		{
+			int32 CheckIndex = 0;
+			if (bIsForward)
+				CheckIndex = (CorrectIndex + i) % NumSlots;
+			else
+				CheckIndex = (CorrectIndex - i + NumSlots) % NumSlots;
+
+			if (WeaponSlot.IsValidIndex(CheckIndex) && !WeaponSlot[CheckIndex].NameItem.IsNone())
 			{
-				if (Ammo.WeaponType == Info.WeaponType && Ammo.Cout > 0)
+				bool bCanUseThisSlot = false;
+
+				if (WeaponSlot[CheckIndex].AdditionalInfo.Round > 0)
 				{
-					bHasAmmoOrRound = true;
-					break;
+					bCanUseThisSlot = true;
+				}
+				else
+				{
+					UTDSGameInstance* GI = Cast<UTDSGameInstance>(GetWorld()->GetGameInstance());
+					if (GI)
+					{
+						FWeaponInfo Info;
+						if (GI->GetWeaponInfoByName(WeaponSlot[CheckIndex].NameItem, Info))
+						{
+							for (auto& Ammo : AmmoSlots)
+							{
+								if (Ammo.WeaponType == Info.WeaponType && Ammo.Cout > 0)
+								{
+									bCanUseThisSlot = true;
+									break;
+								}
+							}
+						}
+					}
+				}
+
+				if (bCanUseThisSlot)
+				{
+					NewIndex = CheckIndex;
+					bFound = true;
 				}
 			}
 		}
 	}
 
-	if (bHasAmmoOrRound)
-	{
-		if (OldIndex >= 0 && WeaponSlot.IsValidIndex(OldIndex))
-		{
-			SetAdditionalInfoWeapon(OldIndex, OldInfo);
-		}
-		
-		OnSwitchWeapon.Broadcast(NewIdWeapon, NewAdditionalInfo, CorrectIndex);
-		return true;
-	}
+	if (!bFound)
+		return false;
 
-	// No ammo or rounds available
-	return false;
+	SetAdditionalInfoWeapon(OldIndex, OldInfo);
+	OnSwitchWeapon.Broadcast(WeaponSlot[NewIndex].NameItem, WeaponSlot[NewIndex].AdditionalInfo, NewIndex);
+
+	return true;
 }
 
 bool UTDSInventoryComponent::SwitchWeaponByIndex(int32 IndexWeaponToChange, int32 PreviosIndex, FAdditionalWeaponInfo PreviosWeaponInfo)
