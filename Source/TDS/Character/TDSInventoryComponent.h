@@ -44,9 +44,9 @@ public:
 	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	FOnWeaponHaveRound OnWeaponHaveRound;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapons")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapons")
 	TArray<FWeaponSlot> WeaponSlot;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapons")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapons")
 	TArray<FAmmoSlot> AmmoSlots;
 
 	int32 MaxSlotWeapon = 0;
@@ -89,4 +89,12 @@ public:
 	void DropWeaponByIndex(int32 ByIndex, FDropItem& DropItemInfo);
 	UFUNCTION(BlueprintCallable, Category = "Interface")
 	bool GetDropItemInfoFromInventory(int32 IndexSlot, FDropItem &DropItemInfo);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	TArray <FWeaponSlot> GetWeaponSlots();
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	TArray <FAmmoSlot> GetAmmoSlots();
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	void InitInventory(TArray<FWeaponSlot> NewWeaponSlotsInfo, TArray<FAmmoSlot> NewAmmoSlotsInfo);
 };

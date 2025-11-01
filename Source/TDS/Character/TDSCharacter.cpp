@@ -173,7 +173,8 @@ void ATDSCharacter::InputAxisX(float value)
 
 void ATDSCharacter::InputAttackPressed()
 {
-	AttackCharEvent(true);
+	if (bIsAlive)
+		AttackCharEvent(true);
 }
 
 void ATDSCharacter::InputAttackReleasd()
@@ -387,7 +388,7 @@ void ATDSCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponA
 
 void ATDSCharacter::TryReloadWeapon()
 {
-	if (CurrentWeapon && !CurrentWeapon->WeaponReloading)
+	if (bIsAlive && CurrentWeapon && !CurrentWeapon->WeaponReloading)
 	{
 		if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSetting.MaxRound && CurrentWeapon->CheckCanWeaponReload())
 		{
@@ -547,32 +548,6 @@ void ATDSCharacter::TrySwitchNextWeapon()
 			}
 		}
 	}
-
-	/*if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->WeaponSlot.Num() > 1)
-	{
-		int8 OldIndex = CurrentIndexWeapon;
-		FAdditionalWeaponInfo OldInfo;
-		if (CurrentWeapon)
-		{
-			OldInfo = CurrentWeapon->AdditionalWeaponInfo;
-			if (CurrentWeapon->WeaponReloading)
-				CurrentWeapon->CancelReload();
-		}
-
-		if (InventoryComponent)
-		{
-			int8 NewIndex = CurrentIndexWeapon + 1;
-			if (NewIndex >= InventoryComponent->WeaponSlot.Num())
-			{
-				NewIndex = 0;
-			}
-
-			if (InventoryComponent->SwitchWeaponToIndexByNextPreviosIndex(CurrentIndexWeapon + 1, OldIndex, OldInfo, true))
-			{
-				CurrentIndexWeapon = NewIndex;
-			}
-		}
-	}*/
 }
 
 void ATDSCharacter::TrySwitchPreviosWeapon()
@@ -597,31 +572,6 @@ void ATDSCharacter::TrySwitchPreviosWeapon()
 			}
 		}
 	}
-	/*if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->WeaponSlot.Num() > 1)
-	{
-		int8 OldIndex = CurrentIndexWeapon;
-		FAdditionalWeaponInfo OldInfo;
-		if (CurrentWeapon)
-		{
-			OldInfo = CurrentWeapon->AdditionalWeaponInfo;
-			if (CurrentWeapon->WeaponReloading)
-				CurrentWeapon->CancelReload();
-		}
-
-		if (InventoryComponent)
-		{
-			int8 NewIndex = CurrentIndexWeapon - 1;
-			if (NewIndex < 0)
-			{
-				NewIndex = InventoryComponent->WeaponSlot.Num() - 1;
-			}
-
-			if (InventoryComponent->SwitchWeaponToIndexByNextPreviosIndex(CurrentIndexWeapon - 1, OldIndex, OldInfo, false))
-			{
-				CurrentIndexWeapon = NewIndex;
-			}
-		}
-	}*/
 }
 
 void ATDSCharacter::TryAbilityEnabled()
@@ -712,6 +662,11 @@ void ATDSCharacter::RemoveEffect(UTDS_StateEffect* RemoveEffect)
 	Effects.Remove(RemoveEffect);
 }
 
+void ATDSCharacter::CharDead_BP_Implementation()
+{
+	//in BP
+}
+
 void ATDSCharacter::CharDead()
 {
 	float TimeAnim = 0.0f;
@@ -725,12 +680,19 @@ void ATDSCharacter::CharDead()
 
 	bIsAlive = false;
 
-	UnPossessed();
+	if (GetController())
+	{
+		GetController()->UnPossess();
+	}
 
 	//Timer Ragdoll
 	GetWorldTimerManager().SetTimer(TimerHandle_RagDollTimer, this, &ATDSCharacter::EnableRagdoll, TimeAnim, false);
 	
 	GetCursorToWorld()->SetVisibility(false);
+
+	AttackCharEvent(false);
+
+	CharDead_BP();
 }
 
 void ATDSCharacter::EnableRagdoll()

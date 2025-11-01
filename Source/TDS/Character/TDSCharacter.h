@@ -128,7 +128,7 @@ public:
 	//Weapon
 	AWeaponDefault* CurrentWeapon = nullptr;
 	
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	AWeaponDefault* GetCurrentWeapon();
 	UFUNCTION()
 	void InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponAdditionalInfo, int32 NewCurrentIndexWeapon);
@@ -154,7 +154,7 @@ public:
 	//Cursor
 	UDecalComponent* CurrentCursor = nullptr;
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	UDecalComponent* GetCursorToWorld();
 
 	//Sprint
@@ -197,6 +197,7 @@ public:
 
 	//Interface
 	EPhysicalSurface GetSurfaceType() override;
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	TArray<UTDS_StateEffect*> GetAllCurrentEffects() override;
 	void AddEffect(UTDS_StateEffect* newEffect) override;
 	void RemoveEffect(UTDS_StateEffect* RemoveEffect) override;
@@ -206,4 +207,8 @@ public:
 	void CharDead();
 	void EnableRagdoll();
 	float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+	
+	UFUNCTION(BlueprintNativeEvent)
+	void CharDead_BP();
+
 };

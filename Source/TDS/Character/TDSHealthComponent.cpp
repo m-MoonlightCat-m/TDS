@@ -63,6 +63,8 @@ void UTDSHealthComponent::ChangeHealthValue(float ChangeValue)
 
 	Health += ChangeValue;
 
+	OnHealthChange.Broadcast(Health, ChangeValue);
+
 	if (Health > MaxHealth)
 	{
 		Health = MaxHealth;
@@ -73,8 +75,6 @@ void UTDSHealthComponent::ChangeHealthValue(float ChangeValue)
 		{
 			OnDead.Broadcast();
 		}
-	}
-
-	OnHealthChange.Broadcast(Health, ChangeValue);
+	}	
 }
 
