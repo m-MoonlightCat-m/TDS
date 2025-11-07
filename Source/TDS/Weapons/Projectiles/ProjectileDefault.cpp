@@ -121,7 +121,7 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, 
 		}
 
 		
-		UTypes::AddEffectBySurfaceType(Hit.GetActor(), ProjectileSetting.Effect, mySurfacetype);
+		UTypes::AddEffectBySurfaceType(Hit.GetActor(), Hit.BoneName, ProjectileSetting.Effect, mySurfacetype);
 	}
 
 

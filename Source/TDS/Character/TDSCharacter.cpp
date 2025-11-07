@@ -580,7 +580,7 @@ void ATDSCharacter::TryAbilityEnabled()
 	{
 		UTDS_StateEffect* NewEffect = NewObject<UTDS_StateEffect>(this, AbilityEffect);
 		if (NewEffect)
-			NewEffect->InitObject(this);
+			NewEffect->InitObject(this, NAME_None);
 	}
 }
 
@@ -590,7 +590,7 @@ void ATDSCharacter::TryHealthBoostEnabled()
 	{
 		UTDS_StateEffect* NewEffect = NewObject<UTDS_StateEffect>(this, HealthBoostEffect);
 		if (NewEffect)
-			NewEffect->InitObject(this);
+			NewEffect->InitObject(this, NAME_None);
 	}
 }
 
@@ -600,7 +600,7 @@ void ATDSCharacter::TryImmunityEnabled()
 	{
 		UTDS_StateEffect* NewEffect = NewObject<UTDS_StateEffect>(this, ImmunityEffect);
 		if (NewEffect)
-			NewEffect->InitObject(this);
+			NewEffect->InitObject(this, NAME_None);
 	}
 }
 
@@ -610,7 +610,7 @@ void ATDSCharacter::TryStunEnabled()
 	{
 		UTDS_StateEffect* NewEffect = NewObject<UTDS_StateEffect>(this, StunEffect);
 		if (NewEffect)
-			NewEffect->InitObject(this);
+			NewEffect->InitObject(this, NAME_None);
 	}
 }
 
@@ -620,7 +620,7 @@ void ATDSCharacter::TryAuraDamageEnabled()
 	{
 		UTDS_StateEffect* NewEffect = NewObject<UTDS_StateEffect>(this, AuraDamageEffect);
 		if (NewEffect)
-			NewEffect->InitObject(this);
+			NewEffect->InitObject(this, NAME_None);
 	}
 }
 
@@ -716,7 +716,7 @@ float ATDSCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEv
 		AProjectileDefault* myProjectile = Cast<AProjectileDefault>(DamageCauser);
 		if (myProjectile)
 		{
-			UTypes::AddEffectBySurfaceType(this, myProjectile->ProjectileSetting.Effect, GetSurfaceType());
+			UTypes::AddEffectBySurfaceType(this, NAME_None, myProjectile->ProjectileSetting.Effect, GetSurfaceType());
 		}
 	}
 

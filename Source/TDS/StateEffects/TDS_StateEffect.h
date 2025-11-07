@@ -18,7 +18,7 @@ class TDS_API UTDS_StateEffect : public UObject
 	
 public:
 
-	virtual bool InitObject(AActor* Actor);
+	virtual bool InitObject(AActor* Actor, FName NameBonHit);
 	
 	virtual void DestroyObject();
 
@@ -39,7 +39,7 @@ class TDS_API UTDS_StateEffect_ExecuteOnce : public UTDS_StateEffect
 
 public:
 
-	bool InitObject(AActor* Actor) override;
+	bool InitObject(AActor* Actor, FName NameBonHit) override;
 	void DestroyObject() override;
 
 	virtual void ExecuteOnce();
@@ -64,7 +64,7 @@ class TDS_API UTDS_StateEffect_ExecuteTimer : public UTDS_StateEffect
 
 public:
 
-	bool InitObject(AActor* Actor) override;
+	bool InitObject(AActor* Actor, FName NameBonHit) override;
 	void DestroyObject() override;
 
 	virtual void Execute();
@@ -92,7 +92,7 @@ class TDS_API UTDS_StateEffect_HealthBoost : public UTDS_StateEffect
 
 public:
 
-	bool InitObject(AActor* Actor) override;
+	bool InitObject(AActor* Actor, FName NameBonHit) override;
 	void DestroyObject() override;
 
 	virtual void Boosted();
@@ -117,7 +117,7 @@ class TDS_API UTDS_StateEffect_Immunity : public UTDS_StateEffect
 
 public:
 
-	bool InitObject(AActor* Actor) override;
+	bool InitObject(AActor* Actor, FName NameBonHit) override;
 	void DestroyObject() override;
 
 	void EndImmunity();
@@ -145,7 +145,7 @@ class TDS_API UTDS_StateEffect_Stun : public UTDS_StateEffect
 
 public:
 
-	bool InitObject(AActor* Actor) override;
+	bool InitObject(AActor* Actor, FName NameBonHit) override;
 	void DestroyObject() override;
 
 	void EndStun();
@@ -174,7 +174,7 @@ class TDS_API UTDS_StateEffect_AuraDamage : public UTDS_StateEffect
 
 public:
 
-	bool InitObject(AActor* Actor) override;
+	bool InitObject(AActor* Actor, FName NameBonHit) override;
 	void DestroyObject() override;
 
 	void DealDamage();

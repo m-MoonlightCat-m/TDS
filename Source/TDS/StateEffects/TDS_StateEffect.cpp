@@ -10,7 +10,7 @@
 #include "../Character/TDSCharacter.h"
 #include "Engine/World.h"
 
-bool UTDS_StateEffect::InitObject(AActor* Actor)
+bool UTDS_StateEffect::InitObject(AActor* Actor, FName NameBonHit)
 {
 	myActor = Actor;
 
@@ -39,9 +39,9 @@ void UTDS_StateEffect::DestroyObject()
 	}
 }
 
-bool UTDS_StateEffect_ExecuteOnce::InitObject(AActor* Actor)
+bool UTDS_StateEffect_ExecuteOnce::InitObject(AActor* Actor, FName NameBonHit)
 {
-	Super::InitObject(Actor);
+	Super::InitObject(Actor, NameBonHit);
 
 	if (NiagaraHealthEffect)
 	{
@@ -80,19 +80,27 @@ void UTDS_StateEffect_ExecuteOnce::ExecuteOnce()
 	}
 }
 
-bool UTDS_StateEffect_ExecuteTimer::InitObject(AActor* Actor)
+bool UTDS_StateEffect_ExecuteTimer::InitObject(AActor* Actor, FName NameBonHit)
 {
-	Super::InitObject(Actor);
+	Super::InitObject(Actor, NameBonHit);
 
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle_EffectTimer, this, &UTDS_StateEffect_ExecuteTimer::DestroyObject, Timer, false);
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle_ExecuteTimer, this, &UTDS_StateEffect_ExecuteTimer::Execute, RateTime, true);
 
 	if (NiagaraEffect)
 	{
-		FName NameBonToAttached;
+		FName NameBonToAttached = NameBonHit;
 		FVector Loc = FVector(0);
 
-		NiagaraEmmiter = UNiagaraFunctionLibrary::SpawnSystemAttached(NiagaraEffect, myActor->GetRootComponent(), NameBonToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
+		USceneComponent* myMesh = Cast<USceneComponent>(myActor->GetComponentByClass(USkeletalMeshComponent::StaticClass()));
+		if (myMesh)
+		{
+			NiagaraEmmiter = UNiagaraFunctionLibrary::SpawnSystemAttached(NiagaraEffect, myMesh, NameBonToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
+		}
+		else
+		{
+			NiagaraEmmiter = UNiagaraFunctionLibrary::SpawnSystemAttached(NiagaraEffect, myActor->GetRootComponent(), NameBonToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
+		}
 	}
 
 	return true;
@@ -119,9 +127,9 @@ void UTDS_StateEffect_ExecuteTimer::Execute()
 	}
 }
 
-bool UTDS_StateEffect_HealthBoost::InitObject(AActor* Actor)
+bool UTDS_StateEffect_HealthBoost::InitObject(AActor* Actor, FName NameBonHit)
 {
-	Super::InitObject(Actor);
+	Super::InitObject(Actor, NameBonHit);
 
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle_HealthBoostTimer, this, &UTDS_StateEffect_HealthBoost::DestroyObject, Timer, false);
 
@@ -173,9 +181,9 @@ void UTDS_StateEffect_HealthBoost::Boosted()
 	}
 }
 
-bool UTDS_StateEffect_Immunity::InitObject(AActor* Actor)
+bool UTDS_StateEffect_Immunity::InitObject(AActor* Actor, FName NameBonHit)
 {
-	Super::InitObject(Actor);
+	Super::InitObject(Actor, NameBonHit);
 
 	if (myActor)
 	{
@@ -235,9 +243,9 @@ void UTDS_StateEffect_Immunity::EndImmunity()
 	}
 }
 
-bool UTDS_StateEffect_Stun::InitObject(AActor* Actor)
+bool UTDS_StateEffect_Stun::InitObject(AActor* Actor, FName NameBonHit)
 {
-	Super::InitObject(Actor);
+	Super::InitObject(Actor, NameBonHit);
 
 	if (NiagaraEffectStun)
 	{
@@ -301,9 +309,9 @@ void UTDS_StateEffect_Stun::EndStun()
 
 }
 
-bool UTDS_StateEffect_AuraDamage::InitObject(AActor* Actor)
+bool UTDS_StateEffect_AuraDamage::InitObject(AActor* Actor, FName NameBonHit)
 {
-	Super::InitObject(Actor);
+	Super::InitObject(Actor, NameBonHit);
 
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldDynamic));
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn));
