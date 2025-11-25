@@ -317,6 +317,11 @@ void ATDSCharacter::ChangeMovementState()
 	}
 }
 
+bool ATDSCharacter::GetIsAlive()
+{
+	return bIsAlive;
+}
+
 AWeaponDefault* ATDSCharacter::GetCurrentWeapon()
 {
 	return CurrentWeapon;

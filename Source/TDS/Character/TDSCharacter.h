@@ -124,6 +124,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ChangeMovementState();
 
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	bool GetIsAlive();
+
 
 	//Weapon
 	AWeaponDefault* CurrentWeapon = nullptr;
