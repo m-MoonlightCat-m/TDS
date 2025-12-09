@@ -75,7 +75,9 @@ struct FProjectileInfo
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSettings")
 	float ProjectileLifeTime = 20.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSettings")
-	float ProjectileinitSpeed = 2000.0f;
+	float ProjectileInitSpeed = 2000.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSettings")
+	float ProjectileMaxSpeed = 2000.0f;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FX")

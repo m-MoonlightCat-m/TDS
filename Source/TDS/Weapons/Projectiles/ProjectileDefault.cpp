@@ -59,8 +59,8 @@ void AProjectileDefault::Tick(float DeltaTime)
 
 void AProjectileDefault::InitProjectile(FProjectileInfo InitParam)
 {
-	BulletProjectileMovement->InitialSpeed = InitParam.ProjectileinitSpeed;
-	BulletProjectileMovement->MaxSpeed = InitParam.ProjectileinitSpeed;
+	BulletProjectileMovement->InitialSpeed = InitParam.ProjectileInitSpeed;
+	BulletProjectileMovement->MaxSpeed = InitParam.ProjectileMaxSpeed;
 	this->SetLifeSpan(InitParam.ProjectileLifeTime);
 
 	if (InitParam.ProjectileStaticMesh)
