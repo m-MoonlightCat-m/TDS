@@ -61,5 +61,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Health")
 	virtual void ChangeHealthValue(float ChangeValue);
 
+	UPROPERTY(BlueprintReadWrite, Category = "Health")
 	bool bIsImmunToDamage = false;
 };

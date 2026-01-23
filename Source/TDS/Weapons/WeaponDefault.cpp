@@ -146,8 +146,6 @@ void AWeaponDefault::WeaponInit()
 		StaticMeshWeapon->DestroyComponent();
 	}
 
-	//ReloadTime = WeaponSetting.ReloadTime;
-
 	UpdateStateWeapon(EMovementState::Run_State);
 }
 
