@@ -186,52 +186,58 @@ void ATDSCharacter::MovementTick(float DeltaTime)
 {
 	if (bIsAlive)
 	{
-		AddMovementInput(FVector(1.0f, 0.0f, 0.0f), AxisX);
-		AddMovementInput(FVector(0.0f, 1.0f, 0.0f), AxisY);
-
-		APlayerController* myController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-		if (myController)
+		if (GetController() && GetController()->IsLocalPlayerController())
 		{
-			FHitResult ResultHit;
-			myController->GetHitResultUnderCursor(ECC_GameTraceChannel1, true, ResultHit);
+			AddMovementInput(FVector(1.0f, 0.0f, 0.0f), AxisX);
+			AddMovementInput(FVector(0.0f, 1.0f, 0.0f), AxisY);
 
-			if (!bIsStuned)
+			//FString SEnum = UEnum::GetValueAsString(GetCharacterMovement());
+			//UE_LOG(LogTDS_Net, Warning, TEXT("Movement state - %s"), *SEnum);
+
+			APlayerController* myController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+			if (myController)
 			{
-				float FindRotatorResultYaw = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ResultHit.Location).Yaw;
-				SetActorRotation(FQuat(FRotator(0.0f, FindRotatorResultYaw, 0.0f)));
-			}
-			
-			if (CurrentWeapon)
-			{
-				FVector Displacement = FVector(0);
-				switch (MovementState)
+				FHitResult ResultHit;
+				myController->GetHitResultUnderCursor(ECC_GameTraceChannel1, true, ResultHit);
+
+				if (!bIsStuned)
 				{
-				case EMovementState::Aim_State:
-					Displacement = FVector(0.0f, 0.0f, 160.0f);
-					CurrentWeapon->ShouldReduceDispersion = true;
-					break;
-				case EMovementState::AimWalk_State:
-					Displacement = FVector(0.0f, 0.0f, 160.0f);
-					CurrentWeapon->ShouldReduceDispersion = true;
-					break;
-				case EMovementState::Walk_State:
-					Displacement = FVector(0.0f, 0.0f, 120.0f);
-					CurrentWeapon->ShouldReduceDispersion = false;
-					break;
-				case EMovementState::Run_State:
-					Displacement = FVector(0.0f, 0.0f, 120.0f);
-					CurrentWeapon->ShouldReduceDispersion = false;
-					break;
-				case EMovementState::SptintRun_State:
-					break;
-				default:
-					break;
+					float FindRotatorResultYaw = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ResultHit.Location).Yaw;
+					SetActorRotation(FQuat(FRotator(0.0f, FindRotatorResultYaw, 0.0f)));
 				}
 
-				CurrentWeapon->ShootEndLocation = ResultHit.Location + Displacement;
+				if (CurrentWeapon)
+				{
+					FVector Displacement = FVector(0);
+					switch (MovementState)
+					{
+					case EMovementState::Aim_State:
+						Displacement = FVector(0.0f, 0.0f, 160.0f);
+						CurrentWeapon->ShouldReduceDispersion = true;
+						break;
+					case EMovementState::AimWalk_State:
+						Displacement = FVector(0.0f, 0.0f, 160.0f);
+						CurrentWeapon->ShouldReduceDispersion = true;
+						break;
+					case EMovementState::Walk_State:
+						Displacement = FVector(0.0f, 0.0f, 120.0f);
+						CurrentWeapon->ShouldReduceDispersion = false;
+						break;
+					case EMovementState::Run_State:
+						Displacement = FVector(0.0f, 0.0f, 120.0f);
+						CurrentWeapon->ShouldReduceDispersion = false;
+						break;
+					case EMovementState::SptintRun_State:
+						break;
+					default:
+						break;
+					}
+
+					CurrentWeapon->ShootEndLocation = ResultHit.Location + Displacement;
+				}
 			}
 		}
-	}		
+	}
 }
 
 void ATDSCharacter::AttackCharEvent(bool bIsFiring)
