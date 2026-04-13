@@ -44,9 +44,9 @@ public:
 	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	FOnWeaponHaveRound OnWeaponHaveRound;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapons")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Weapons")
 	TArray<FWeaponSlot> WeaponSlot;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapons")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Weapons")
 	TArray<FAmmoSlot> AmmoSlots;
 
 	int32 MaxSlotWeapon = 0;
@@ -95,6 +95,22 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	TArray <FAmmoSlot> GetAmmoSlots();
 
-	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	void InitInventory(TArray<FWeaponSlot> NewWeaponSlotsInfo, TArray<FAmmoSlot> NewAmmoSlotsInfo);
+
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Inventory")
+	void InitInventory_OnServer(const TArray<FWeaponSlot>& NewWeaponSlotsInfo, const TArray<FAmmoSlot>& NewAmmoSlotsInfo);
+
+	//Broadcast Multiplayer
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Inventory")
+	void AmmoChangeEvent_Milticast(EWeaponType WeaponType, int32 Cout);
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Inventory")
+	void SwitchWeaponEvent_Multicast(FName WeaponName, FAdditionalWeaponInfo WeaponAdditionalInfo, int32 CurrentIndexWeapon);
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Inventory")
+	void WeaponAdditionalInfoChangeEvent_Multicast(int32 IndexSlot, FAdditionalWeaponInfo AdditionalInfo);
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Inventory")
+	void AmmoEmptyEvent_Milticast(EWeaponType WeaponType);
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Inventory")
+	void AmmoAviableEvent_Milticast(EWeaponType WeaponType);
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Inventory")
+	void UpdateSlotsEvent_Milticast(int32 IndexSlot, FWeaponSlot WeaponInfo);
+	
 };

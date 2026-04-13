@@ -46,4 +46,7 @@ public:
 	void CoolDownShieldEnd();
 
 	void RecoveryShield();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void ShieldChangeEvent_Multicast(float NewShield, float Damage);
 };

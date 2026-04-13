@@ -63,7 +63,7 @@ public:
 	FVector CursorSize = FVector(20.0f, 40.0f, 40.0f);
 
 	//Movement
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	EMovementState MovementState = EMovementState::Walk_State;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	FCharacterSpeed MovementInfo;
@@ -129,6 +129,7 @@ public:
 
 
 	//Weapon
+	UPROPERTY(Replicated)
 	AWeaponDefault* CurrentWeapon = nullptr;
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure)
@@ -214,4 +215,19 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void CharDead_BP();
 
+	UFUNCTION(Server, Unreliable)
+	void SetActorRotationByYaw_OnServer(float Yaw);
+	UFUNCTION(NetMulticast, Unreliable)
+	void SetActorRotationByYaw_Multicast(float Yaw);
+
+	UFUNCTION(Server, Reliable)
+	void SetMovementState_OnServer(EMovementState NewState);
+	UFUNCTION(NetMulticast, Reliable)
+	void SetMovementState_Multicast(EMovementState NewState);
+
+	UFUNCTION(Server, Reliable)
+	void TryReloadWeapon_OnServer();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void PlayAnim_Multicast(UAnimMontage* Anim);
 };

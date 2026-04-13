@@ -63,4 +63,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, Category = "Health")
 	bool bIsImmunToDamage = false;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void HealthChangeEvent_Multicast(float NewHealth, float Value);
+	UFUNCTION(NetMulticast, Reliable)
+	void DeadEvent_Multicast();
 };

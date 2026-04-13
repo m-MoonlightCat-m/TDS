@@ -4,6 +4,7 @@
 #include "TDSInventoryComponent.h"
 #include "../GameCatalog/TDSGameInstance.h"
 #include "../Interface/TDS_IntrfcGameActor.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values for this component's properties
 UTDSInventoryComponent::UTDSInventoryComponent()
@@ -11,6 +12,8 @@ UTDSInventoryComponent::UTDSInventoryComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
+
+	SetIsReplicatedByDefault(true);
 
 	// ...
 }
@@ -133,7 +136,8 @@ bool UTDSInventoryComponent::SwitchWeaponToIndexByNextPreviosIndex(int32 ChangeT
 		return false;
 
 	SetAdditionalInfoWeapon(OldIndex, OldInfo);
-	OnSwitchWeapon.Broadcast(WeaponSlot[NewIndex].NameItem, WeaponSlot[NewIndex].AdditionalInfo, NewIndex);
+	SwitchWeaponEvent_Multicast(WeaponSlot[NewIndex].NameItem, WeaponSlot[NewIndex].AdditionalInfo, NewIndex);
+	//OnSwitchWeapon.Broadcast(WeaponSlot[NewIndex].NameItem, WeaponSlot[NewIndex].AdditionalInfo, NewIndex);
 
 	return true;
 }
@@ -150,7 +154,8 @@ bool UTDSInventoryComponent::SwitchWeaponByIndex(int32 IndexWeaponToChange, int3
 	if (!ToSwitchIdWeapon.IsNone())
 	{
 		SetAdditionalInfoWeapon(PreviosIndex, PreviosWeaponInfo);
-		OnSwitchWeapon.Broadcast(ToSwitchIdWeapon, ToSwitchAdditionalInfo, IndexWeaponToChange);
+		SwitchWeaponEvent_Multicast(ToSwitchIdWeapon, ToSwitchAdditionalInfo, IndexWeaponToChange);
+		//OnSwitchWeapon.Broadcast(ToSwitchIdWeapon, ToSwitchAdditionalInfo, IndexWeaponToChange);
 
 		EWeaponType ToSwitchWeaponType;
 		if (GetWeaponTypeByNameWeapon(ToSwitchIdWeapon, ToSwitchWeaponType))
@@ -274,7 +279,8 @@ void UTDSInventoryComponent::SetAdditionalInfoWeapon(int32 IndexWeapon, FAdditio
 				WeaponSlot[i].AdditionalInfo = NewInfo;
 				bIsFind = true;
 
-				OnWeaponAdditionalInfoChange.Broadcast(IndexWeapon, NewInfo);
+				WeaponAdditionalInfoChangeEvent_Multicast(IndexWeapon, NewInfo);
+				//OnWeaponAdditionalInfoChange.Broadcast(IndexWeapon, NewInfo);
 			}
 			i++;
 		}
@@ -297,7 +303,8 @@ void UTDSInventoryComponent::AmmoSlotChangeValue(EWeaponType TypeWeapon, int32 C
 			if (AmmoSlots[i].Cout > AmmoSlots[i].MaxCout)
 				AmmoSlots[i].Cout = AmmoSlots[i].MaxCout;
 
-			OnAmmoChange.Broadcast(TypeWeapon, AmmoSlots[i].Cout);
+			AmmoChangeEvent_Milticast(AmmoSlots[i].WeaponType, AmmoSlots[i].Cout);
+			//OnAmmoChange.Broadcast(TypeWeapon, AmmoSlots[i].Cout);
 
 			bIsFind = true;
 		}
@@ -327,9 +334,11 @@ bool UTDSInventoryComponent::CheckAmmoForWeapon(EWeaponType TypeWeapon, int8 &Av
 	}
 
 	if (AviableAmmoForWeapon <= 0)
-		OnWeaponAmmoEmpty.Broadcast(TypeWeapon);
+		AmmoEmptyEvent_Milticast(TypeWeapon);
+	//OnWeaponAmmoEmpty.Broadcast(TypeWeapon);
 	else
-		OnWeaponAmmoAviable.Broadcast(TypeWeapon);
+		AmmoAviableEvent_Milticast(TypeWeapon);
+		//OnWeaponAmmoAviable.Broadcast(TypeWeapon);
 
 	return false;
 }
@@ -372,7 +381,8 @@ bool UTDSInventoryComponent::SwitchWeaponToInventory(FWeaponSlot NewWeapon, int3
 		WeaponSlot[IndexSlot] = NewWeapon;
 		
 		SwitchWeaponToIndexByNextPreviosIndex(CurrentIndexWeaponChar, -1, NewWeapon.AdditionalInfo, true);
-		OnUpdateWeaponSlots.Broadcast(IndexSlot, NewWeapon);
+		UpdateSlotsEvent_Milticast(IndexSlot, NewWeapon);
+		//OnUpdateWeaponSlots.Broadcast(IndexSlot, NewWeapon);
 
 		result = true;
 	}
@@ -388,7 +398,8 @@ bool UTDSInventoryComponent::TryGetWeaponToInventory(FWeaponSlot NewWeapon)
 		if (WeaponSlot.IsValidIndex(indexSlot))
 		{
 			WeaponSlot[indexSlot] = NewWeapon;
-			OnUpdateWeaponSlots.Broadcast(indexSlot, NewWeapon);
+			UpdateSlotsEvent_Milticast(indexSlot, NewWeapon);
+			//OnUpdateWeaponSlots.Broadcast(indexSlot, NewWeapon);
 			return true;
 		}
 	}
@@ -425,7 +436,8 @@ void UTDSInventoryComponent::DropWeaponByIndex(int32 ByIndex, FDropItem& DropIte
 		{
 			if (!WeaponSlot[j].NameItem.IsNone())
 			{
-				OnSwitchWeapon.Broadcast(WeaponSlot[j].NameItem, WeaponSlot[j].AdditionalInfo, j);
+				SwitchWeaponEvent_Multicast(WeaponSlot[j].NameItem, WeaponSlot[j].AdditionalInfo, j);
+				//OnSwitchWeapon.Broadcast(WeaponSlot[j].NameItem, WeaponSlot[j].AdditionalInfo, j);
 			}
 			j++;
 		}
@@ -434,7 +446,8 @@ void UTDSInventoryComponent::DropWeaponByIndex(int32 ByIndex, FDropItem& DropIte
 		if (GetOwner()->GetClass()->ImplementsInterface(UTDS_IntrfcGameActor::StaticClass()))
 			ITDS_IntrfcGameActor::Execute_DropWeaponToWorld(GetOwner(), DropItemInfo);
 
-		OnUpdateWeaponSlots.Broadcast(ByIndex, EmptyWeaponSlot);
+		UpdateSlotsEvent_Milticast(ByIndex, EmptyWeaponSlot);
+		//OnUpdateWeaponSlots.Broadcast(ByIndex, EmptyWeaponSlot);
 	}
 }
 
@@ -468,30 +481,69 @@ TArray<FAmmoSlot> UTDSInventoryComponent::GetAmmoSlots()
 	return AmmoSlots;
 }
 
-void UTDSInventoryComponent::InitInventory(TArray<FWeaponSlot> NewWeaponSlotsInfo, TArray<FAmmoSlot> NewAmmoSlotsInfo)
+void UTDSInventoryComponent::UpdateSlotsEvent_Milticast_Implementation(int32 IndexSlot, FWeaponSlot WeaponInfo)
+{
+	OnUpdateWeaponSlots.Broadcast(IndexSlot, WeaponInfo);
+}
+
+void UTDSInventoryComponent::AmmoAviableEvent_Milticast_Implementation(EWeaponType WeaponType)
+{
+	OnWeaponAmmoAviable.Broadcast(WeaponType);
+}
+
+void UTDSInventoryComponent::AmmoEmptyEvent_Milticast_Implementation(EWeaponType WeaponType)
+{
+	OnWeaponAmmoEmpty.Broadcast(WeaponType);
+}
+
+void UTDSInventoryComponent::WeaponAdditionalInfoChangeEvent_Multicast_Implementation(int32 IndexSlot, FAdditionalWeaponInfo AdditionalInfo)
+{
+	OnWeaponAdditionalInfoChange.Broadcast(IndexSlot, AdditionalInfo);
+}
+
+void UTDSInventoryComponent::SwitchWeaponEvent_Multicast_Implementation(FName WeaponName, FAdditionalWeaponInfo WeaponAdditionalInfo, int32 CurrentIndexWeapon)
+{
+	OnSwitchWeapon.Broadcast(WeaponName, WeaponAdditionalInfo, CurrentIndexWeapon);
+}
+
+void UTDSInventoryComponent::AmmoChangeEvent_Milticast_Implementation(EWeaponType WeaponType, int32 Cout)
+{
+	OnAmmoChange.Broadcast(WeaponType, Cout);
+}
+
+void UTDSInventoryComponent::InitInventory_OnServer_Implementation(const TArray<FWeaponSlot>& NewWeaponSlotsInfo, const TArray<FAmmoSlot>& NewAmmoSlotsInfo)
 {
 	WeaponSlot = NewWeaponSlotsInfo;
 	AmmoSlots = NewAmmoSlotsInfo;
 
-	for (int8 i = 0; i < WeaponSlot.Num(); i++)
-	{
-		UTDSGameInstance* myGI = Cast<UTDSGameInstance>(GetWorld()->GetGameInstance());
-		if (myGI)
-		{
-			if (!WeaponSlot[i].NameItem.IsNone())
-			{
-				/*FWeaponInfo Info;
-				if (myGI->GetWeaponInfoByName(WeaponSlot[i].NameItem, Info))
-					WeaponSlot[i].AdditionalInfo.Round = Info.MaxRound;*/
-			}
-		}
-	}
+	//for (int8 i = 0; i < WeaponSlot.Num(); i++)
+	//{
+	//	UTDSGameInstance* myGI = Cast<UTDSGameInstance>(GetWorld()->GetGameInstance());
+	//	if (myGI)
+	//	{
+	//		if (!WeaponSlot[i].NameItem.IsNone())
+	//		{
+	//			/*FWeaponInfo Info;
+	//			if (myGI->GetWeaponInfoByName(WeaponSlot[i].NameItem, Info))
+	//				WeaponSlot[i].AdditionalInfo.Round = Info.MaxRound;*/
+	//		}
+	//	}
+	//}
 
 	MaxSlotWeapon = WeaponSlot.Num();
 
 	if (WeaponSlot.IsValidIndex(0))
 	{
 		if (!WeaponSlot[0].NameItem.IsNone())
-			OnSwitchWeapon.Broadcast(WeaponSlot[0].NameItem, WeaponSlot[0].AdditionalInfo, 0);
+			SwitchWeaponEvent_Multicast(WeaponSlot[0].NameItem, WeaponSlot[0].AdditionalInfo, 0);
+			//OnSwitchWeapon.Broadcast(WeaponSlot[0].NameItem, WeaponSlot[0].AdditionalInfo, 0);
 	}
+}
+
+void UTDSInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UTDSInventoryComponent, WeaponSlot);
+	DOREPLIFETIME(UTDSInventoryComponent, AmmoSlots);
 }

@@ -4,6 +4,7 @@
 #include "ProjectileDefault_Grenade.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 
 int32 DebugExplodeShow = 1;
@@ -26,7 +27,7 @@ void AProjectileDefault_Grenade::TimerExplose(float DeltaTime)
 	{
 		if (TimerToExplose > TimeToExplose)
 		{
-			Explose();
+			Explose_OnServer();
 		}
 		else
 		{
@@ -39,7 +40,7 @@ void AProjectileDefault_Grenade::BulletCollisionSphereHit(UPrimitiveComponent* H
 {
 	if (!TimerEnable)
 	{
-		Explose();
+		Explose_OnServer();
 	}
 	Super::BulletCollisionSphereHit(HitComp, OtherActor, OtherComp, NormalImpulse, Hit);
 }
@@ -49,7 +50,20 @@ void AProjectileDefault_Grenade::ImpactProjectile()
 	TimerEnable = true;
 }
 
-void AProjectileDefault_Grenade::Explose()
+
+void AProjectileDefault_Grenade::GrenadeFX_Multicast_Implementation(UNiagaraSystem* FXFire, USoundBase* SoundFire)
+{
+	if (FXFire)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), FXFire, GetActorLocation(), GetActorRotation(), FVector(1.0f));
+	}
+	if (SoundFire)
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), SoundFire, GetActorLocation());
+	}
+}
+
+void AProjectileDefault_Grenade::Explose_OnServer_Implementation()
 {
 	if (DebugExplodeShow)
 	{
@@ -59,19 +73,12 @@ void AProjectileDefault_Grenade::Explose()
 
 	TimerEnable = false;
 
-	if (ProjectileSetting.ExplodeFX)
-	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), ProjectileSetting.ExplodeFX, GetActorLocation(), GetActorRotation(), FVector(1.0f));
-	}
-	if (ProjectileSetting.ExplodeSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(GetWorld(), ProjectileSetting.ExplodeSound, GetActorLocation());
-	}
+	GrenadeFX_Multicast(ProjectileSetting.ExplodeFX, ProjectileSetting.ExplodeSound);
 
 	TArray<AActor*> IgnoredActor;
 	UGameplayStatics::ApplyRadialDamageWithFalloff(GetWorld(),
 		ProjectileSetting.ExplodeMaxDamage,
-		ProjectileSetting.ExplodeMaxDamage*0.2f,
+		ProjectileSetting.ExplodeMaxDamage * 0.2f,
 		GetActorLocation(),
 		ProjectileSetting.ProjectileMinRadiusDamage,
 		ProjectileSetting.ProjectileMaxRadiusDamage,

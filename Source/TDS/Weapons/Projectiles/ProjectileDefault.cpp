@@ -14,6 +14,8 @@ AProjectileDefault::AProjectileDefault()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	SetReplicates(true);
+
 	BulletCollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("Collision Sphere"));
 
 	BulletCollisionSphere->SetSphereRadius(16.f);
@@ -65,8 +67,7 @@ void AProjectileDefault::InitProjectile(FProjectileInfo InitParam)
 
 	if (InitParam.ProjectileStaticMesh)
 	{
-		BulletMesh->SetStaticMesh(InitParam.ProjectileStaticMesh);
-		BulletMesh->SetRelativeTransform(InitParam.ProjectileStaticMeshOffset);
+		InitVisualMeshProjectile_Multicast(InitParam.ProjectileStaticMesh, InitParam.ProjectileStaticMeshOffset);
 	}
 	else
 		BulletMesh->DestroyComponent();
@@ -75,8 +76,7 @@ void AProjectileDefault::InitProjectile(FProjectileInfo InitParam)
 	{
 		if (InitParam.ProjectileTrailFX)
 		{
-			BulletFX->SetAsset(InitParam.ProjectileTrailFX); 
-			BulletFX->SetRelativeTransform(InitParam.ProjectileTrailFXOffset); 
+			InitVisualTrailProjectile_Multicast(InitParam.ProjectileTrailFX, InitParam.ProjectileTrailFXOffset);
 		}
 		else
 		{
@@ -104,7 +104,7 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, 
 
 			if (myMaterial && OtherComp)
 			{
-				UGameplayStatics::SpawnDecalAttached(myMaterial, FVector(20.0f), OtherComp, NAME_None, Hit.ImpactPoint, Hit.ImpactNormal.Rotation(), EAttachLocation::KeepWorldPosition, 10.0f);
+				SpawnHitDecal_Multicast(myMaterial, OtherComp, Hit);
 			}
 		}
 		if (ProjectileSetting.HitFXs.Contains(mySurfacetype))
@@ -112,13 +112,13 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, 
 			UNiagaraSystem* myNiagara = ProjectileSetting.HitFXs[mySurfacetype];
 			if (myNiagara)
 			{
-				UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), myNiagara, Hit.ImpactPoint, Hit.ImpactNormal.Rotation(), FVector(1.0f), true);
+				SpawnHitFX_Multicast(myNiagara, Hit);
 			}
 		}
 
 		if (ProjectileSetting.HitSound)
 		{
-			UGameplayStatics::PlaySoundAtLocation(GetWorld(), ProjectileSetting.HitSound, Hit.ImpactPoint);
+			SpawnHitSound_Multicast(ProjectileSetting.HitSound, Hit);
 		}
 
 		
@@ -144,3 +144,30 @@ void AProjectileDefault::ImpactProjectile()
 	this->Destroy();
 }
 
+void AProjectileDefault::InitVisualMeshProjectile_Multicast_Implementation(UStaticMesh* NewMesh, FTransform Meshrelative)
+{
+	BulletMesh->SetStaticMesh(NewMesh);
+	BulletMesh->SetRelativeTransform(Meshrelative);
+}
+
+void AProjectileDefault::InitVisualTrailProjectile_Multicast_Implementation(UNiagaraSystem* NewFX, FTransform TemplateRelative)
+{
+	BulletFX->SetAsset(NewFX);
+	BulletFX->SetRelativeTransform(TemplateRelative);
+}
+
+
+void AProjectileDefault::SpawnHitDecal_Multicast_Implementation(UMaterialInterface* DecalMaterial, UPrimitiveComponent* OtherComp, FHitResult HitResult)
+{
+	UGameplayStatics::SpawnDecalAttached(DecalMaterial, FVector(20.0f), OtherComp, NAME_None, HitResult.ImpactPoint, HitResult.ImpactNormal.Rotation(), EAttachLocation::KeepWorldPosition, 10.0f);
+}
+
+void AProjectileDefault::SpawnHitFX_Multicast_Implementation(UNiagaraSystem* FXTemplate, FHitResult HitResult)
+{
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), FXTemplate, HitResult.ImpactPoint, HitResult.ImpactNormal.Rotation(), FVector(1.0f), true);
+}
+
+void AProjectileDefault::SpawnHitSound_Multicast_Implementation(USoundBase* HitSound, FHitResult HitResult)
+{
+	UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSound, HitResult.ImpactPoint);
+}

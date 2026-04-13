@@ -20,6 +20,8 @@
 #include "TDSCharacterHealthComponent.h"
 #include "TDSStaminaComponent.h"
 #include "../Weapons/Projectiles/ProjectileDefault.h"
+#include "../TDS.h"
+#include "Net/UnrealNetwork.h"
 
 
 ATDSCharacter::ATDSCharacter()
@@ -65,6 +67,9 @@ ATDSCharacter::ATDSCharacter()
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
+
+	//NetWork
+	bReplicates = true;
 }
 
 void ATDSCharacter::Tick(float DeltaSeconds)
@@ -74,7 +79,7 @@ void ATDSCharacter::Tick(float DeltaSeconds)
 	if (CurrentCursor)
 	{
 		APlayerController* myPC = Cast <APlayerController>(GetController());
-		if (myPC)
+		if (myPC && myPC->IsLocalPlayerController())
 		{
 			FHitResult TraceHitResult;
 			myPC->GetHitResultUnderCursor(ECC_Visibility, true, TraceHitResult);
@@ -147,10 +152,14 @@ void ATDSCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (CursorMaterial)
+	if (GetWorld() && GetWorld()->GetNetMode() != NM_DedicatedServer)
 	{
-		CurrentCursor = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), CursorMaterial, CursorSize, FVector(0));
+		if (CursorMaterial && GetLocalRole() == ROLE_AutonomousProxy || GetLocalRole() == ROLE_Authority)
+		{
+			CurrentCursor = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), CursorMaterial, CursorSize, FVector(0));
+		}
 	}
+
 }
 
 void ATDSCharacter::InputAxisY(float value)
@@ -191,8 +200,8 @@ void ATDSCharacter::MovementTick(float DeltaTime)
 			AddMovementInput(FVector(1.0f, 0.0f, 0.0f), AxisX);
 			AddMovementInput(FVector(0.0f, 1.0f, 0.0f), AxisY);
 
-			//FString SEnum = UEnum::GetValueAsString(GetCharacterMovement());
-			//UE_LOG(LogTDS_Net, Warning, TEXT("Movement state - %s"), *SEnum);
+			FString SEnum = UEnum::GetValueAsString(MovementState);
+			UE_LOG(LogTDS_Net, Warning, TEXT("Movement state - %s"), *SEnum);
 
 			APlayerController* myController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 			if (myController)
@@ -204,28 +213,32 @@ void ATDSCharacter::MovementTick(float DeltaTime)
 				{
 					float FindRotatorResultYaw = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ResultHit.Location).Yaw;
 					SetActorRotation(FQuat(FRotator(0.0f, FindRotatorResultYaw, 0.0f)));
+					SetActorRotationByYaw_OnServer(FindRotatorResultYaw);
 				}
 
 				if (CurrentWeapon)
 				{
 					FVector Displacement = FVector(0);
+					bool bIsReduceDispertion = false;
 					switch (MovementState)
 					{
 					case EMovementState::Aim_State:
 						Displacement = FVector(0.0f, 0.0f, 160.0f);
-						CurrentWeapon->ShouldReduceDispersion = true;
+						//CurrentWeapon->ShouldReduceDispersion = true;
+						bIsReduceDispertion = true;
 						break;
 					case EMovementState::AimWalk_State:
 						Displacement = FVector(0.0f, 0.0f, 160.0f);
-						CurrentWeapon->ShouldReduceDispersion = true;
+						//CurrentWeapon->ShouldReduceDispersion = true;
+						bIsReduceDispertion = true;
 						break;
 					case EMovementState::Walk_State:
 						Displacement = FVector(0.0f, 0.0f, 120.0f);
-						CurrentWeapon->ShouldReduceDispersion = false;
+						//CurrentWeapon->ShouldReduceDispersion = false;
 						break;
 					case EMovementState::Run_State:
 						Displacement = FVector(0.0f, 0.0f, 120.0f);
-						CurrentWeapon->ShouldReduceDispersion = false;
+						//CurrentWeapon->ShouldReduceDispersion = false;
 						break;
 					case EMovementState::SptintRun_State:
 						break;
@@ -233,7 +246,8 @@ void ATDSCharacter::MovementTick(float DeltaTime)
 						break;
 					}
 
-					CurrentWeapon->ShootEndLocation = ResultHit.Location + Displacement;
+					//CurrentWeapon->ShootEndLocation = ResultHit.Location + Displacement;
+					CurrentWeapon->UpdateWeaponByCharacterMovementState_OnServer(ResultHit.Location + Displacement, bIsReduceDispertion);
 				}
 			}
 		}
@@ -246,7 +260,7 @@ void ATDSCharacter::AttackCharEvent(bool bIsFiring)
 	myWeapon = GetCurrentWeapon();
 	if (myWeapon)
 	{
-		myWeapon->SetWeaponStateFire(bIsFiring);
+		myWeapon->SetWeaponStateFire_OnServer(bIsFiring);
 	}
 	else
 		UE_LOG(LogTemp, Warning, TEXT("ATDSCharacter::AttackCharEvent - CurrentWeapon"));
@@ -282,9 +296,11 @@ void ATDSCharacter::CharacterUpdate()
 
 void ATDSCharacter::ChangeMovementState()
 {
+	EMovementState NewState = EMovementState::Walk_State;
+
 	if (!WalkEnable && !SprintRunEnable && !AimEnable)
 	{
-		MovementState = EMovementState::Run_State;
+		NewState = EMovementState::Run_State;
 	}
 	else
 	{
@@ -292,34 +308,36 @@ void ATDSCharacter::ChangeMovementState()
 		{
 			WalkEnable = false;
 			AimEnable = false;
-			MovementState = EMovementState::SptintRun_State;
+			NewState = EMovementState::SptintRun_State;
 		}
 		if (WalkEnable && !SprintRunEnable && AimEnable)
 		{
-			MovementState = EMovementState::AimWalk_State;
+			NewState = EMovementState::AimWalk_State;
 		}
 		else
 		{
 			if (WalkEnable && !SprintRunEnable && !AimEnable)
 			{
-				MovementState = EMovementState::Walk_State;
+				NewState = EMovementState::Walk_State;
 			}
 			else
 			{
 				if (!WalkEnable && !SprintRunEnable && AimEnable)
 				{
-					MovementState = EMovementState::Aim_State;
+					NewState = EMovementState::Aim_State;
 				}
 			}
 		}
 	}
 
-	CharacterUpdate();
+	SetMovementState_OnServer(NewState);
+
+	//CharacterUpdate();
 
 	AWeaponDefault* myWeapon = GetCurrentWeapon();
 	if (myWeapon)
 	{
-		myWeapon->UpdateStateWeapon(MovementState);
+		myWeapon->UpdateStateWeapon_OnServer(NewState);
 	}
 }
 
@@ -335,6 +353,8 @@ AWeaponDefault* ATDSCharacter::GetCurrentWeapon()
 
 void ATDSCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponAdditionalInfo, int32 NewCurrentIndexWeapon)
 {
+	//On Server
+
 	if (CurrentWeapon)
 	{
 		CurrentWeapon->Destroy();
@@ -370,7 +390,7 @@ void ATDSCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponA
 
 					//!!!DEBUG!!!!
 					myWeapon->ReloadTime = myWeaponInfo.ReloadTime;
-					myWeapon->UpdateStateWeapon(MovementState);
+					myWeapon->UpdateStateWeapon_OnServer(MovementState);
 
 					myWeapon->AdditionalWeaponInfo = WeaponAdditionalInfo;
 					CurrentIndexWeapon = NewCurrentIndexWeapon;
@@ -401,10 +421,7 @@ void ATDSCharacter::TryReloadWeapon()
 {
 	if (bIsAlive && CurrentWeapon && !CurrentWeapon->WeaponReloading)
 	{
-		if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSetting.MaxRound && CurrentWeapon->CheckCanWeaponReload())
-		{
-			CurrentWeapon->InitReload();
-		}
+		TryReloadWeapon_OnServer();
 	}
 }
 
@@ -686,7 +703,8 @@ void ATDSCharacter::CharDead()
 	if (DeadsAnim.IsValidIndex(rnd) && DeadsAnim[rnd] && GetMesh()->GetAnimInstance())
 	{
 		TimeAnim = DeadsAnim[rnd]->GetPlayLength();
-		GetMesh()->GetAnimInstance()->Montage_Play(DeadsAnim[rnd]);
+		//GetMesh()->GetAnimInstance()->Montage_Play(DeadsAnim[rnd]);
+		PlayAnim_Multicast(DeadsAnim[rnd]);
 	}
 
 	bIsAlive = false;
@@ -734,3 +752,48 @@ float ATDSCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEv
 	return ActualDamage;
 }
 
+void ATDSCharacter::PlayAnim_Multicast_Implementation(UAnimMontage* Anim)
+{
+	if(GetMesh() && GetMesh()->GetAnimInstance())
+		GetMesh()->GetAnimInstance()->Montage_Play(Anim);
+}
+
+void ATDSCharacter::TryReloadWeapon_OnServer_Implementation()
+{
+	if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSetting.MaxRound && CurrentWeapon->CheckCanWeaponReload())
+	{
+		CurrentWeapon->InitReload();
+	}
+}
+
+void ATDSCharacter::SetMovementState_Multicast_Implementation(EMovementState NewState)
+{
+	SetMovementState_Multicast(NewState);
+}
+
+void ATDSCharacter::SetMovementState_OnServer_Implementation(EMovementState NewState)
+{
+	MovementState = NewState;
+	CharacterUpdate();
+}
+
+void ATDSCharacter::SetActorRotationByYaw_Multicast_Implementation(float Yaw)
+{
+	SetActorRotationByYaw_Multicast(Yaw);
+}
+
+void ATDSCharacter::SetActorRotationByYaw_OnServer_Implementation(float Yaw)
+{
+	if (Controller && !Controller->IsLocalPlayerController())
+	{
+		SetActorRotation(FQuat(FRotator(0.0f, Yaw, 0.0f)));
+	}
+}
+
+void ATDSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ATDSCharacter, MovementState);
+	DOREPLIFETIME(ATDSCharacter, CurrentWeapon);
+}

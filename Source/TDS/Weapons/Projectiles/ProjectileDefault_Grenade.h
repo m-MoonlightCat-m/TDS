@@ -26,11 +26,16 @@ public:
 
 	virtual void ImpactProjectile() override;
 
-	void Explose();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Granade")
 	bool TimerEnable = false;
 	float TimerToExplose = 0.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Granade")
 	float TimeToExplose = 5.0f;
+
+	UFUNCTION (Server, Reliable)
+	void Explose_OnServer();
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void GrenadeFX_Multicast(UNiagaraSystem* FXFire, USoundBase* SoundFire);
 };

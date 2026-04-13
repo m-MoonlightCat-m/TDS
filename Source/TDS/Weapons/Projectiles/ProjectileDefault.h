@@ -51,4 +51,17 @@ public:
 
 	UFUNCTION()
 	virtual void ImpactProjectile();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void InitVisualMeshProjectile_Multicast(UStaticMesh* NewMesh, FTransform Meshrelative);
+	UFUNCTION(NetMulticast, Reliable)
+	void InitVisualTrailProjectile_Multicast(UNiagaraSystem* NewFX, FTransform Meshrelative);
+
+
+	UFUNCTION(NetMulticast, Reliable)
+	void SpawnHitDecal_Multicast(UMaterialInterface* DecalMaterial, UPrimitiveComponent* OtherComp, FHitResult HitResult);
+	UFUNCTION(NetMulticast, Reliable)
+	void SpawnHitFX_Multicast(UNiagaraSystem* FXTemplate, FHitResult HitResult);
+	UFUNCTION(NetMulticast, Reliable)
+	void SpawnHitSound_Multicast(USoundBase* HitSound, FHitResult HitResult);
 };
