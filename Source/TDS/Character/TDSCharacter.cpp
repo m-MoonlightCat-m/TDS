@@ -449,7 +449,7 @@ void ATDSCharacter::WeaponFireStart(UAnimMontage* Anim)
 	WeaponFireStart_BP(Anim);
 }
 
-bool ATDSCharacter::TrySwitchWeaponToIndexByKeyInput(int32 ToIndex)
+void ATDSCharacter::TrySwitchWeaponToIndexByKeyInput_OnServer_Implementation(int32 ToIndex)
 {
 	bool bIsSuccess = false;
 	if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->WeaponSlot.IsValidIndex(ToIndex))
@@ -469,8 +469,6 @@ bool ATDSCharacter::TrySwitchWeaponToIndexByKeyInput(int32 ToIndex)
 			bIsSuccess = InventoryComponent->SwitchWeaponByIndex(ToIndex, OldIndex, OldInfo);
 		}
 	}
-
-	return bIsSuccess;
 }
 
 void ATDSCharacter::DropCurrentWeapon()

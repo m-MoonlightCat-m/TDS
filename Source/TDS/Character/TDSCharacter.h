@@ -144,8 +144,8 @@ public:
 	void WeaponReloadEnd(bool bIsSuccess, int32 AmmoTake);
 	UFUNCTION()
 	void WeaponFireStart(UAnimMontage* Anim);
-	UFUNCTION()
-	bool TrySwitchWeaponToIndexByKeyInput(int32 ToIndex);
+	UFUNCTION(Server, Reliable)
+	void TrySwitchWeaponToIndexByKeyInput_OnServer(int32 ToIndex);
 	UFUNCTION()
 	void DropCurrentWeapon();
 	UFUNCTION(BlueprintNativeEvent)
@@ -196,7 +196,7 @@ public:
 	template <int32 Id>
 	void TKeyPressed()
 	{
-		TrySwitchWeaponToIndexByKeyInput(Id);
+		TrySwitchWeaponToIndexByKeyInput_OnServer(Id);
 	}
 
 	//Interface

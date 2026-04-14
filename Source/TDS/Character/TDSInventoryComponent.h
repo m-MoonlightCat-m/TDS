@@ -83,8 +83,8 @@ public:
 	bool CheckCanTakeWeapon(int32& FreeSlot);
 	UFUNCTION(BlueprintCallable, Category = "Interface")
 	bool SwitchWeaponToInventory(FWeaponSlot NewWeapon, int32 IndexSlot, int32 CurrentIndexWeaponChar, FDropItem& DropItemInfo);
-	UFUNCTION(BlueprintCallable, Category = "Interface")
-	bool TryGetWeaponToInventory(FWeaponSlot NewWeapon);
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interface")
+	void TryGetWeaponToInventory_OnServer(AActor* PickUpActor, FWeaponSlot NewWeapon);
 	UFUNCTION(BlueprintCallable, Category = "Interface")
 	void DropWeaponByIndex(int32 ByIndex, FDropItem& DropItemInfo);
 	UFUNCTION(BlueprintCallable, Category = "Interface")
@@ -102,8 +102,8 @@ public:
 	//Broadcast Multiplayer
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Inventory")
 	void AmmoChangeEvent_Milticast(EWeaponType WeaponType, int32 Cout);
-	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Inventory")
-	void SwitchWeaponEvent_Multicast(FName WeaponName, FAdditionalWeaponInfo WeaponAdditionalInfo, int32 CurrentIndexWeapon);
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Inventory")
+	void SwitchWeaponEvent_OnServer(FName WeaponName, FAdditionalWeaponInfo WeaponAdditionalInfo, int32 CurrentIndexWeapon);
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Inventory")
 	void WeaponAdditionalInfoChangeEvent_Multicast(int32 IndexSlot, FAdditionalWeaponInfo AdditionalInfo);
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable, Category = "Inventory")
