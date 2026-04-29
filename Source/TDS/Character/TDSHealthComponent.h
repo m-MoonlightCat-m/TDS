@@ -37,6 +37,8 @@ protected:
 	virtual void BeginPlay() override;
 
 	float MaxHealth = 100.0f;
+
+	UPROPERTY(Replicated)
 	float Health = MaxHealth;
 
 public:	
@@ -58,8 +60,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Health")
 	void SetMaxHealth(float NewMaxHealth);
 
-	UFUNCTION(BlueprintCallable, Category = "Health")
-	virtual void ChangeHealthValue(float ChangeValue);
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Health")
+	virtual void ChangeHealthValue_OnServer(float ChangeValue);
 
 	UPROPERTY(BlueprintReadWrite, Category = "Health")
 	bool bIsImmunToDamage = false;

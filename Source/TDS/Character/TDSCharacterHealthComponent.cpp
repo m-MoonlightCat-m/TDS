@@ -3,7 +3,7 @@
 
 #include "TDSCharacterHealthComponent.h"
 
-void UTDSCharacterHealthComponent::ChangeHealthValue(float ChangeValue)
+void UTDSCharacterHealthComponent::ChangeHealthValue_OnServer(float ChangeValue)
 {
 	if (bIsImmunToDamage)
 	{
@@ -18,12 +18,12 @@ void UTDSCharacterHealthComponent::ChangeHealthValue(float ChangeValue)
 
 		if (Shield < 0.0f)
 		{
-			//UE_LOG(LogTemp, Warning, TEXT("UTDSCharacterHealthComponent::ChangeHealthValue - Shield < 0"));
+			//UE_LOG(LogTemp, Warning, TEXT("UTDSCharacterHealthComponent::ChangeHealthValue_OnServer - Shield < 0"));
 		}
 	}
 	else
 	{
-		Super::ChangeHealthValue(ChangeValue);
+		Super::ChangeHealthValue_OnServer(ChangeValue);
 	}
 
 }

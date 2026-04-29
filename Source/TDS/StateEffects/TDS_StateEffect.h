@@ -18,8 +18,8 @@ class TDS_API UTDS_StateEffect : public UObject
 	
 public:
 
+	virtual bool IsSupportedForNetworking() const override { return true; };
 	virtual bool InitObject(AActor* Actor, FName NameBonHit);
-	
 	virtual void DestroyObject();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
@@ -28,7 +28,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
 	bool bIsStakable = false;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
+	bool bIsAutoDestroyNiagaraEffect = false;
+
 	AActor* myActor = nullptr;
+	UPROPERTY(Replicated)
+	FName NameBon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
+	UNiagaraSystem* NiagaraEffect = nullptr;
+	//UNiagaraComponent* NiagaraEmmiter = nullptr;
 };
 
 
@@ -46,15 +55,6 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting Execute Once")
 	float Power = 20.0f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting Execute Once")
-	float Timer = 1.0f;
-
-	FTimerHandle TimerHandle_ExecuteOnceTimer;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting Execute Once")
-	UNiagaraSystem* NiagaraHealthEffect = nullptr;
-
-	UNiagaraComponent* NiagaraHealthEmmiter = nullptr;
 };
 
 UCLASS()
@@ -78,11 +78,6 @@ public:
 
 	FTimerHandle TimerHandle_ExecuteTimer;
 	FTimerHandle TimerHandle_EffectTimer;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting Execute Timer")
-	UNiagaraSystem* NiagaraEffect = nullptr;
-
-	UNiagaraComponent* NiagaraEmmiter = nullptr;
 };
 
 UCLASS()
@@ -101,13 +96,7 @@ public:
 	float Power = 50.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting Health Boost")
 	float Timer = 15.0f;
-	
 	FTimerHandle TimerHandle_HealthBoostTimer;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting Health Boost")
-	UNiagaraSystem* NiagaraEffectHealthBoost = nullptr;
-
-	UNiagaraComponent* NiagaraEmmiterHealthBoost = nullptr;
 };
 
 UCLASS()
@@ -131,11 +120,8 @@ public:
 	FTimerHandle TimerHandle_EndImmunityTimer;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting Immunity")
-	UNiagaraSystem* NiagaraEffectStartImmunity = nullptr;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting Immunity")
 	UNiagaraSystem* NiagaraEffectEndImmunity = nullptr;
 
-	UNiagaraComponent* NiagaraEmmiterImmunity = nullptr;
 };
 
 UCLASS()
@@ -158,13 +144,6 @@ public:
 
 	FTimerHandle TimerHandle_StunTimer;
 	FTimerHandle TimerHandle_EffectStunTimer;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting Stun")
-	UNiagaraSystem* NiagaraEffectStun = nullptr;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting Stun")
-	UNiagaraSystem* NiagaraEffectEndStun = nullptr;
-
-	UNiagaraComponent* NiagaraEmmiterStun = nullptr;
 };
 
 UCLASS()
@@ -202,9 +181,5 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting Aura Damage")
 	UNiagaraSystem* NiagaraLightingEffect = nullptr;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting Aura Damage")
-	UNiagaraSystem* NiagaraSphereEffect = nullptr;
-
-	UNiagaraComponent* NiagaraEmmiterSphere = nullptr;
 	UNiagaraComponent* NiagaraEmmiterLight = nullptr;
 };

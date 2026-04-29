@@ -407,8 +407,9 @@ void UTDSInventoryComponent::TryGetWeaponToInventory_OnServer_Implementation(AAc
 	}
 }
 
-void UTDSInventoryComponent::DropWeaponByIndex(int32 ByIndex, FDropItem& DropItemInfo)
+void UTDSInventoryComponent::DropWeaponByIndex_OnServer_Implementation(int32 ByIndex)
 {
+	FDropItem DropItemInfo;
 	FWeaponSlot EmptyWeaponSlot;
 
 	bool bIsCanDrop = false;
@@ -428,8 +429,6 @@ void UTDSInventoryComponent::DropWeaponByIndex(int32 ByIndex, FDropItem& DropIte
 
 	if (bIsCanDrop && WeaponSlot.IsValidIndex(ByIndex) && GetDropItemInfoFromInventory(ByIndex, DropItemInfo))
 	{
-		GetDropItemInfoFromInventory(ByIndex, DropItemInfo);
-
 		bool bIsFindWeapon = false;
 		int8 j = 0;
 		while (j < WeaponSlot.Num() && !bIsFindWeapon)

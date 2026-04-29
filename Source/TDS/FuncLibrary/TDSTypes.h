@@ -305,4 +305,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	static void AddEffectBySurfaceType(AActor* TakeEffectAtctor, FName NameBonHit, TSubclassOf<UTDS_StateEffect> AddEffectClass, EPhysicalSurface SurfaceType);
+
+	UFUNCTION(BlueprintCallable)
+	static void ExecuteEffectAdded(UNiagaraSystem* ExecuteFX, AActor* Target, FVector Offset, FName Socket);
 };

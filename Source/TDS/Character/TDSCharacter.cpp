@@ -22,6 +22,8 @@
 #include "../Weapons/Projectiles/ProjectileDefault.h"
 #include "../TDS.h"
 #include "Net/UnrealNetwork.h"
+#include <NiagaraFunctionLibrary.h>
+#include "Engine/ActorChannel.h"
 
 
 ATDSCharacter::ATDSCharacter()
@@ -112,8 +114,8 @@ void ATDSCharacter::SetupPlayerInputComponent(UInputComponent* NewInputComponent
 	NewInputComponent->BindAction("FireEvent", IE_Released, this, &ATDSCharacter::InputAttackReleasd);
 	NewInputComponent->BindAction("ReloadEvent", IE_Released, this, &ATDSCharacter::TryReloadWeapon);
 
-	NewInputComponent->BindAction(TEXT("SwitchNextWeapon"), EInputEvent::IE_Pressed, this, &ATDSCharacter::TrySwitchNextWeapon);
-	NewInputComponent->BindAction(TEXT("SwitchPreviosWeapon"), EInputEvent::IE_Pressed, this, &ATDSCharacter::TrySwitchPreviosWeapon);
+	NewInputComponent->BindAction(TEXT("SwitchNextWeapon"), EInputEvent::IE_Pressed, this, &ATDSCharacter::TrySwitchNextWeapon_OnServer);
+	NewInputComponent->BindAction(TEXT("SwitchPreviosWeapon"), EInputEvent::IE_Pressed, this, &ATDSCharacter::TrySwitchPreviosWeapon_OnServer);
 
 	NewInputComponent->BindAction(TEXT("AbilityAction"), EInputEvent::IE_Pressed, this, &ATDSCharacter::TryAbilityEnabled);
 	NewInputComponent->BindAction(TEXT("AbilityAction2"), EInputEvent::IE_Pressed, this, &ATDSCharacter::TryHealthBoostEnabled);
@@ -201,7 +203,7 @@ void ATDSCharacter::MovementTick(float DeltaTime)
 			AddMovementInput(FVector(0.0f, 1.0f, 0.0f), AxisY);
 
 			FString SEnum = UEnum::GetValueAsString(MovementState);
-			UE_LOG(LogTDS_Net, Warning, TEXT("Movement state - %s"), *SEnum);
+			//UE_LOG(LogTDS_Net, Warning, TEXT("Movement state - %s"), *SEnum);
 
 			APlayerController* myController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 			if (myController)
@@ -475,8 +477,7 @@ void ATDSCharacter::DropCurrentWeapon()
 {
 	if (InventoryComponent)
 	{
-		FDropItem ItemInfo;
-		InventoryComponent->DropWeaponByIndex(CurrentIndexWeapon, ItemInfo);
+		InventoryComponent->DropWeaponByIndex_OnServer(CurrentIndexWeapon);
 	}
 }
 
@@ -552,8 +553,7 @@ void ATDSCharacter::SetCanSprint(bool bNewCanSprint)
 	}
 }
 
-
-void ATDSCharacter::TrySwitchNextWeapon()
+void ATDSCharacter::TrySwitchNextWeapon_OnServer_Implementation()
 {
 	if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->WeaponSlot.Num() > 1)
 	{
@@ -576,9 +576,8 @@ void ATDSCharacter::TrySwitchNextWeapon()
 	}
 }
 
-void ATDSCharacter::TrySwitchPreviosWeapon()
+void ATDSCharacter::TrySwitchPreviosWeapon_OnServer_Implementation()
 {
-
 	if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->WeaponSlot.Num() > 1)
 	{
 		//We have more then one weapon go switch
@@ -650,6 +649,86 @@ void ATDSCharacter::TryAuraDamageEnabled()
 	}
 }
 
+
+void ATDSCharacter::EffectAdd_OnRep()
+{
+	if (EffectAdd)
+		SwitchEffect(EffectAdd, true);
+}
+
+void ATDSCharacter::EffectRemove_OnRep()
+{
+	if (EffectRemove)
+	{
+		UE_LOG(LogTemp, Log, TEXT("EffectRemove реплицирован: %s"), *EffectRemove->GetName());
+		SwitchEffect(EffectRemove, false);
+	}
+		
+}
+
+void ATDSCharacter::SwitchEffect(UTDS_StateEffect* Effect, bool bIsAdd)
+{
+	if (bIsAdd)
+	{
+		if (Effect && Effect->NiagaraEffect)
+		{
+			FName NameBonToAttached = Effect->NameBon;
+			FVector Loc = FVector(0);
+
+			USkeletalMeshComponent* myMesh = GetMesh();
+			if (myMesh)
+			{
+				UNiagaraComponent* newNiagaraEmmiter = UNiagaraFunctionLibrary::SpawnSystemAttached(Effect->NiagaraEffect, myMesh, NameBonToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
+			}
+		}
+	}
+	else
+	{
+		/*for (int32 i = NiagaraSystemEffects.Num() - 1; i >= 0; --i)
+		{
+			if (NiagaraSystemEffects[i] && NiagaraSystemEffects[i]->GetAsset() && Effect->NiagaraEffect)
+			{
+				if (NiagaraSystemEffects[i]->GetAsset() == Effect->NiagaraEffect)
+				{
+					UE_LOG(LogTemp, Log, TEXT("Удаление Niagara Effect: %s"), *Effect->NiagaraEffect->GetName());
+					NiagaraSystemEffects[i]->Deactivate();
+					NiagaraSystemEffects[i]->DestroyComponent();
+					NiagaraSystemEffects.RemoveAt(i);
+				}
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Несовпадающий эффект: найден %s, ожидается %s"), *NiagaraSystemEffects[i]->GetAsset()->GetName(), *Effect->NiagaraEffect->GetName());
+			}
+		}*/
+
+		if (Effect && Effect->NiagaraEffect)
+		{
+			int32 i = 0;
+			bool bIsFind = false;
+			if (NiagaraSystemEffects.Num() > 0)
+			{
+				while (i < NiagaraSystemEffects.Num() && !bIsFind)
+				{
+					if (NiagaraSystemEffects[i]->GetAsset() && Effect->NiagaraEffect && Effect->NiagaraEffect == NiagaraSystemEffects[i]->GetAsset())
+					{
+						UE_LOG(LogTemp, Log, TEXT("Удаление Niagara Effect: %s"), *Effect->NiagaraEffect->GetName());
+						bIsFind = true;
+						NiagaraSystemEffects[i]->Deactivate();
+						NiagaraSystemEffects[i]->DestroyComponent();
+						NiagaraSystemEffects.RemoveAt(i);
+					}
+					else
+						UE_LOG(LogTemp, Warning, TEXT("Несовпадающий эффект: найден %s, ожидается %s"), *NiagaraSystemEffects[i]->GetAsset()->GetName(), *Effect->NiagaraEffect->GetName());
+					i++;
+				}
+			}
+		
+		}
+	}
+}
+
+
 EPhysicalSurface ATDSCharacter::GetSurfaceType()
 {
 	EPhysicalSurface Result = EPhysicalSurface::SurfaceType_Default;
@@ -678,14 +757,32 @@ TArray<UTDS_StateEffect*> ATDSCharacter::GetAllCurrentEffects()
 	return Effects;
 }
 
-void ATDSCharacter::AddEffect(UTDS_StateEffect* newEffect)
+void ATDSCharacter::AddEffect_Implementation(UTDS_StateEffect* newEffect)
 {
 	Effects.Add(newEffect);
+
+	if (!newEffect->bIsAutoDestroyNiagaraEffect)
+	{
+		SwitchEffect(newEffect, true);
+		EffectAdd = newEffect;
+	}
+	else
+	{
+		if (newEffect->bIsAutoDestroyNiagaraEffect)
+			ExecuteEffectAdded_OnServer(newEffect->NiagaraEffect);
+	}
+	
 }
 
-void ATDSCharacter::RemoveEffect(UTDS_StateEffect* RemoveEffect)
+void ATDSCharacter::RemoveEffect_Implementation(UTDS_StateEffect* RemoveEffect)
 {
 	Effects.Remove(RemoveEffect);
+
+	if (!RemoveEffect->bIsAutoDestroyNiagaraEffect)
+	{
+		SwitchEffect(RemoveEffect, false);
+		EffectRemove = RemoveEffect;
+	}
 }
 
 void ATDSCharacter::CharDead_BP_Implementation()
@@ -736,7 +833,7 @@ float ATDSCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEv
 	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
 	if (bIsAlive)
-		CharHealthComponent->ChangeHealthValue(-DamageAmount);
+		CharHealthComponent->ChangeHealthValue_OnServer(-DamageAmount);
 
 	if (DamageEvent.IsOfType(FRadialDamageEvent::ClassID))
 	{
@@ -788,10 +885,38 @@ void ATDSCharacter::SetActorRotationByYaw_OnServer_Implementation(float Yaw)
 	}
 }
 
+void ATDSCharacter::ExecuteEffectAdded_OnServer_Implementation(UNiagaraSystem* ExecuteFX)
+{
+	ExecuteEffectAdded_Multicast(ExecuteFX);
+}
+
+void ATDSCharacter::ExecuteEffectAdded_Multicast_Implementation(UNiagaraSystem* ExecuteFX)
+{
+	UTypes::ExecuteEffectAdded(ExecuteFX, this, FVector(0), FName("Spine_01"));
+}
+
+bool ATDSCharacter::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlag)
+{
+	bool Wrote = Super::ReplicateSubobjects(Channel, Bunch, RepFlag);
+
+	for (int32 i = 0; i < Effects.Num(); i++)
+	{
+		if (Effects[i])
+		{
+			Wrote |= Channel->ReplicateSubobject(Effects[i], *Bunch, *RepFlag);
+		}
+	}
+	return Wrote;
+}
+
 void ATDSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ATDSCharacter, MovementState);
 	DOREPLIFETIME(ATDSCharacter, CurrentWeapon);
+	DOREPLIFETIME(ATDSCharacter, CurrentIndexWeapon);
+	DOREPLIFETIME(ATDSCharacter, Effects);
+	DOREPLIFETIME(ATDSCharacter, EffectAdd);
+	DOREPLIFETIME(ATDSCharacter, EffectRemove);
 }

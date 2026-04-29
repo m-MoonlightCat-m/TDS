@@ -15,7 +15,7 @@ TArray<UTDS_StateEffect*> ITDS_IntrfcGameActor::GetAllCurrentEffects()
 	return TArray<UTDS_StateEffect*>();
 }
 
-void ITDS_IntrfcGameActor::AddEffect(UTDS_StateEffect* newEffect)
+/*void ITDS_IntrfcGameActor::AddEffect(UTDS_StateEffect* newEffect)
 {
 
 }
@@ -23,4 +23,4 @@ void ITDS_IntrfcGameActor::AddEffect(UTDS_StateEffect* newEffect)
 void ITDS_IntrfcGameActor::RemoveEffect(UTDS_StateEffect* RemoveEffect)
 {
 
-}
+}*/

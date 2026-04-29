@@ -1,6 +1,9 @@
 #include "TDSTypes.h"
 #include "TDS/TDS.h"
 #include "../Interface/TDS_IntrfcGameActor.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/Character.h"
+#include <NiagaraFunctionLibrary.h>
 
 void UTypes::AddEffectBySurfaceType(AActor* TakeEffectAtctor, FName NameBonHit, TSubclassOf<UTDS_StateEffect> AddEffectClass, EPhysicalSurface SurfaceType)
 {
@@ -58,6 +61,27 @@ void UTypes::AddEffectBySurfaceType(AActor* TakeEffectAtctor, FName NameBonHit, 
 				
 				}
 				i++;
+			}
+		}
+	}
+}
+
+void UTypes::ExecuteEffectAdded(UNiagaraSystem* ExecuteFX, AActor* Target, FVector Offset, FName Socket)
+{
+	if (Target)
+	{
+		FName SocketToAttached = Socket;
+		FVector Loc = Offset;
+		ACharacter* myCharacter = Cast<ACharacter>(Target);
+		if (myCharacter && myCharacter->GetMesh())
+		{
+			UNiagaraFunctionLibrary::SpawnSystemAttached(ExecuteFX, myCharacter->GetMesh(), SocketToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
+		}
+		else
+		{
+			if (Target->GetRootComponent())
+			{
+				UNiagaraFunctionLibrary::SpawnSystemAttached(ExecuteFX, Target->GetRootComponent(), SocketToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
 			}
 		}
 	}

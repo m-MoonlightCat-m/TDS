@@ -25,6 +25,8 @@ class ATDSCharacter : public ACharacter, public ITDS_IntrfcGameActor
 public:
 	ATDSCharacter();
 
+	bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlag) override;
+
 	FTimerHandle TimerHandle_RagDollTimer;
 
 	// Called every frame.
@@ -82,7 +84,15 @@ public:
 
 
 	//Effect
+	UPROPERTY(Replicated)
 	TArray<UTDS_StateEffect*> Effects;
+	UPROPERTY(ReplicatedUsing = EffectAdd_OnRep)
+	UTDS_StateEffect* EffectAdd = nullptr;
+	UPROPERTY(ReplicatedUsing = EffectRemove_OnRep)
+	UTDS_StateEffect* EffectRemove = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+	TArray<UNiagaraComponent*> NiagaraSystemEffects;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	TSubclassOf<UTDS_StateEffect> AbilityEffect;
@@ -94,6 +104,20 @@ public:
 	TSubclassOf<UTDS_StateEffect> StunEffect;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	TSubclassOf<UTDS_StateEffect> AuraDamageEffect;
+
+	UFUNCTION()
+	void EffectAdd_OnRep();
+	UFUNCTION()
+	void EffectRemove_OnRep();
+
+	UFUNCTION()
+	void SwitchEffect(UTDS_StateEffect* Effect, bool bIsAdd);
+
+	UFUNCTION(Server, Reliable)
+	void ExecuteEffectAdded_OnServer(UNiagaraSystem* ExecuteFX);
+	UFUNCTION(NetMulticast, Reliable)
+	void ExecuteEffectAdded_Multicast(UNiagaraSystem* ExecuteFX);
+
 
 	//Inputs
 	UFUNCTION()
@@ -180,11 +204,13 @@ public:
 	//EndSprint
 
 	//Inventory Inputs
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
+	UPROPERTY(Replicated, BlueprintReadOnly, EditDefaultsOnly)
 	int32 CurrentIndexWeapon = 0;
 
-	void TrySwitchNextWeapon();
-	void TrySwitchPreviosWeapon();
+	UFUNCTION(Server, Reliable)
+	void TrySwitchNextWeapon_OnServer();
+	UFUNCTION(Server, Reliable)
+	void TrySwitchPreviosWeapon_OnServer();
 
 	//Ability Inputs
 	void TryAbilityEnabled();
@@ -203,8 +229,12 @@ public:
 	EPhysicalSurface GetSurfaceType() override;
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	TArray<UTDS_StateEffect*> GetAllCurrentEffects() override;
-	void AddEffect(UTDS_StateEffect* newEffect) override;
-	void RemoveEffect(UTDS_StateEffect* RemoveEffect) override;
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void AddEffect(UTDS_StateEffect* newEffect);
+	void AddEffect_Implementation(UTDS_StateEffect* newEffect) override;
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void RemoveEffect(UTDS_StateEffect* RemoveEffect);
+	void RemoveEffect_Implementation(UTDS_StateEffect* RemoveEffect) override;
 	//EndInterface
 
 	UFUNCTION(BlueprintCallable)
@@ -230,4 +260,5 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void PlayAnim_Multicast(UAnimMontage* Anim);
+
 };

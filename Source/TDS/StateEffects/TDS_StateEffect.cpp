@@ -9,15 +9,17 @@
 #include "NiagaraSystem.h"
 #include "../Character/TDSCharacter.h"
 #include "Engine/World.h"
+#include "Net/UnrealNetwork.h"
 
 bool UTDS_StateEffect::InitObject(AActor* Actor, FName NameBonHit)
 {
 	myActor = Actor;
+	NameBon = NameBonHit;
 
 	ITDS_IntrfcGameActor* myInterface = Cast<ITDS_IntrfcGameActor>(myActor);
 	if (myInterface)
 	{
-		myInterface->AddEffect(this);
+		myInterface->Execute_AddEffect(myActor, this);
 	}
 
 	return true;
@@ -28,7 +30,7 @@ void UTDS_StateEffect::DestroyObject()
 	ITDS_IntrfcGameActor* myInterface = Cast<ITDS_IntrfcGameActor>(myActor);
 	if (myInterface)
 	{
-		myInterface->RemoveEffect(this);
+		myInterface->Execute_RemoveEffect(myActor, this);
 	}
 
 	myActor = nullptr;
@@ -42,28 +44,12 @@ void UTDS_StateEffect::DestroyObject()
 bool UTDS_StateEffect_ExecuteOnce::InitObject(AActor* Actor, FName NameBonHit)
 {
 	Super::InitObject(Actor, NameBonHit);
-
-	if (NiagaraHealthEffect)
-	{
-		FName NameBonToAttached;
-		FVector Loc = FVector(0);
-
-		NiagaraHealthEmmiter = UNiagaraFunctionLibrary::SpawnSystemAttached(NiagaraHealthEffect, myActor->GetRootComponent(), NameBonToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
-	}
-
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_ExecuteOnceTimer, this, &UTDS_StateEffect_ExecuteOnce::DestroyObject, Timer, false);
-
 	ExecuteOnce();
-
 	return true;
 }
 
 void UTDS_StateEffect_ExecuteOnce::DestroyObject()
 {
-
-	NiagaraHealthEmmiter->DestroyComponent();
-	NiagaraHealthEmmiter = nullptr;
-
 	Super::DestroyObject();
 }
 
@@ -75,7 +61,7 @@ void UTDS_StateEffect_ExecuteOnce::ExecuteOnce()
 
 		if (myHelthComp)
 		{
-			myHelthComp->ChangeHealthValue(Power);
+			myHelthComp->ChangeHealthValue_OnServer(Power);
 		}
 	}
 }
@@ -84,23 +70,10 @@ bool UTDS_StateEffect_ExecuteTimer::InitObject(AActor* Actor, FName NameBonHit)
 {
 	Super::InitObject(Actor, NameBonHit);
 
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_EffectTimer, this, &UTDS_StateEffect_ExecuteTimer::DestroyObject, Timer, false);
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_ExecuteTimer, this, &UTDS_StateEffect_ExecuteTimer::Execute, RateTime, true);
-
-	if (NiagaraEffect)
+	if (GetWorld())
 	{
-		FName NameBonToAttached = NameBonHit;
-		FVector Loc = FVector(0);
-
-		USceneComponent* myMesh = Cast<USceneComponent>(myActor->GetComponentByClass(USkeletalMeshComponent::StaticClass()));
-		if (myMesh)
-		{
-			NiagaraEmmiter = UNiagaraFunctionLibrary::SpawnSystemAttached(NiagaraEffect, myMesh, NameBonToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
-		}
-		else
-		{
-			NiagaraEmmiter = UNiagaraFunctionLibrary::SpawnSystemAttached(NiagaraEffect, myActor->GetRootComponent(), NameBonToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
-		}
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle_EffectTimer, this, &UTDS_StateEffect_ExecuteTimer::DestroyObject, Timer, false);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle_ExecuteTimer, this, &UTDS_StateEffect_ExecuteTimer::Execute, RateTime, true);
 	}
 
 	return true;
@@ -108,8 +81,8 @@ bool UTDS_StateEffect_ExecuteTimer::InitObject(AActor* Actor, FName NameBonHit)
 
 void UTDS_StateEffect_ExecuteTimer::DestroyObject()
 {
-	NiagaraEmmiter->DestroyComponent();
-	NiagaraEmmiter = nullptr;
+	if (GetWorld())
+		GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
 
 	Super::DestroyObject();
 }
@@ -122,7 +95,7 @@ void UTDS_StateEffect_ExecuteTimer::Execute()
 
 		if (myHelthComp)
 		{
-			myHelthComp->ChangeHealthValue(Power);
+			myHelthComp->ChangeHealthValue_OnServer(Power);
 		}
 	}
 }
@@ -131,15 +104,8 @@ bool UTDS_StateEffect_HealthBoost::InitObject(AActor* Actor, FName NameBonHit)
 {
 	Super::InitObject(Actor, NameBonHit);
 
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_HealthBoostTimer, this, &UTDS_StateEffect_HealthBoost::DestroyObject, Timer, false);
-
-	if (NiagaraEffectHealthBoost)
-	{
-		FName NameBonToAttached;
-		FVector Loc = FVector(0);
-
-		NiagaraEmmiterHealthBoost = UNiagaraFunctionLibrary::SpawnSystemAttached(NiagaraEffectHealthBoost, myActor->GetRootComponent(), NameBonToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
-	}
+	if (GetWorld())
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle_HealthBoostTimer, this, &UTDS_StateEffect_HealthBoost::DestroyObject, Timer, false);
 
 	Boosted();
 
@@ -158,8 +124,8 @@ void UTDS_StateEffect_HealthBoost::DestroyObject()
 			HealthComp->SetCurrentHealth(100.0f);
 	}
 
-	NiagaraEmmiterHealthBoost->DestroyComponent();
-	NiagaraEmmiterHealthBoost = nullptr;
+	if (GetWorld())
+		GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
 
 	Super::DestroyObject();
 }
@@ -195,23 +161,16 @@ bool UTDS_StateEffect_Immunity::InitObject(AActor* Actor, FName NameBonHit)
 		}
 	}
 	
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_ImmunityTimer, this, &UTDS_StateEffect_Immunity::EndImmunity, TimerStartImmunity, false);
-	
-	if (NiagaraEffectStartImmunity)
-	{
-		FName NameBonToAttached;
-		FVector Loc = FVector(0);
-
-		NiagaraEmmiterImmunity = UNiagaraFunctionLibrary::SpawnSystemAttached(NiagaraEffectStartImmunity, myActor->GetRootComponent(), NameBonToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
-	}
+	if (GetWorld())
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle_ImmunityTimer, this, &UTDS_StateEffect_Immunity::EndImmunity, TimerStartImmunity, false);
 
 	return true;
 }
 
 void UTDS_StateEffect_Immunity::DestroyObject()
 {
-	NiagaraEmmiterImmunity->DestroyComponent();
-	NiagaraEmmiterImmunity = nullptr;
+	if (GetWorld())
+		GetWorld()->GetTimerManager().ClearAllTimersForObject(this); 
 
 	Super::DestroyObject();
 }
@@ -228,32 +187,14 @@ void UTDS_StateEffect_Immunity::EndImmunity()
 		}
 	}
 
-	NiagaraEmmiterImmunity->DestroyComponent();
-	NiagaraEmmiterImmunity = nullptr;
+	if(GetWorld())
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle_EndImmunityTimer, this, &UTDS_StateEffect_Immunity::DestroyObject, TimerEndImmunity, false);
 
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_EndImmunityTimer, this, &UTDS_StateEffect_Immunity::DestroyObject, TimerEndImmunity, false);
-
-
-	if (NiagaraEffectEndImmunity)
-	{
-		FName NameBonToAttached;
-		FVector Loc = FVector(0);
-
-		NiagaraEmmiterImmunity = UNiagaraFunctionLibrary::SpawnSystemAttached(NiagaraEffectEndImmunity, myActor->GetRootComponent(), NameBonToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
-	}
 }
 
 bool UTDS_StateEffect_Stun::InitObject(AActor* Actor, FName NameBonHit)
 {
 	Super::InitObject(Actor, NameBonHit);
-
-	if (NiagaraEffectStun)
-	{
-		FName NameBonToAttached;
-		FVector Loc = FVector(0);
-
-		NiagaraEmmiterStun = UNiagaraFunctionLibrary::SpawnSystemAttached(NiagaraEffectStun, myActor->GetRootComponent(), NameBonToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
-	}
 
 	APawn* myPawn = Cast<APawn>(Actor);
 	if (myPawn && myPawn->GetController())
@@ -267,16 +208,14 @@ bool UTDS_StateEffect_Stun::InitObject(AActor* Actor, FName NameBonHit)
 		}
 	}
 
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_StunTimer, this, &UTDS_StateEffect_Stun::EndStun, TimerStartStun, false);
+	if (GetWorld())
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle_StunTimer, this, &UTDS_StateEffect_Stun::EndStun, TimerStartStun, false);
 
 	return true;
 }
 
 void UTDS_StateEffect_Stun::DestroyObject()
 {
-	NiagaraEmmiterStun->DestroyComponent();
-	NiagaraEmmiterStun = nullptr;
-
 	if (myActor && Controller)
 	{
 		APawn* myPawn = Cast<APawn>(myActor);
@@ -289,23 +228,16 @@ void UTDS_StateEffect_Stun::DestroyObject()
 		}
 	}
 
+	if (GetWorld())
+		GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
+
 	Super::DestroyObject();
 }
 
 void UTDS_StateEffect_Stun::EndStun()
 {
-	NiagaraEmmiterStun->DestroyComponent();
-	NiagaraEmmiterStun = nullptr;
-
-	if (NiagaraEffectStun)
-	{
-		FName NameBonToAttached;
-		FVector Loc = FVector(0);
-
-		NiagaraEmmiterStun = UNiagaraFunctionLibrary::SpawnSystemAttached(NiagaraEffectEndStun, myActor->GetRootComponent(), NameBonToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
-	}
-
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_EffectStunTimer, this, &UTDS_StateEffect_Stun::DestroyObject, TimerEffectStun, false);
+	if (GetWorld())
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle_EffectStunTimer, this, &UTDS_StateEffect_Stun::DestroyObject, TimerEffectStun, false);
 
 }
 
@@ -316,19 +248,10 @@ bool UTDS_StateEffect_AuraDamage::InitObject(AActor* Actor, FName NameBonHit)
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldDynamic));
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn));
 	
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_AuraDamageTimer, this, &UTDS_StateEffect_AuraDamage::DestroyObject, TimerAuraDamage, false);
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_DamageLightingTimer, this, &UTDS_StateEffect_AuraDamage::DealDamage, TimerDamageLighting, true);
-
-	if (NiagaraSphereEffect)
+	if (GetWorld())
 	{
-		FName NameBonToAttached;
-		FVector Loc = FVector(0);
-		NiagaraEmmiterSphere = UNiagaraFunctionLibrary::SpawnSystemAttached(NiagaraSphereEffect, myActor->GetRootComponent(), NameBonToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
-	}
-
-	if (NiagaraEmmiterSphere)
-	{
-		NiagaraEmmiterSphere->SetFloatParameter(FName("Radius"), AuraRadius);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle_AuraDamageTimer, this, &UTDS_StateEffect_AuraDamage::DestroyObject, TimerAuraDamage, false);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle_DamageLightingTimer, this, &UTDS_StateEffect_AuraDamage::DealDamage, TimerDamageLighting, true);
 	}
 
 	return true;
@@ -336,13 +259,8 @@ bool UTDS_StateEffect_AuraDamage::InitObject(AActor* Actor, FName NameBonHit)
 
 void UTDS_StateEffect_AuraDamage::DestroyObject()
 {
-	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_DamageLightingTimer);
-
-	NiagaraEmmiterSphere->DestroyComponent();
-	NiagaraEmmiterSphere = nullptr;
-
-	NiagaraEmmiterLight->DestroyComponent();
-	NiagaraEmmiterLight = nullptr;
+	if (GetWorld())
+		GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
 		
 	Super::DestroyObject();
 }
@@ -377,7 +295,7 @@ void UTDS_StateEffect_AuraDamage::DealDamage()
 			if (HealthComp)
 			{
 				SpawnLighting(Target);
-				HealthComp->ChangeHealthValue(-DamagePerTick);
+				HealthComp->ChangeHealthValue_OnServer(-DamagePerTick);
 			}
 		}
 	}
@@ -392,3 +310,9 @@ void UTDS_StateEffect_AuraDamage::SpawnLighting(AActor* TargetActor)
 	}
 }
 
+void UTDS_StateEffect::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UTDS_StateEffect, NameBon);
+}

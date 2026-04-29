@@ -2,6 +2,7 @@
 
 
 #include "TDSHealthComponent.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values for this component's properties
 UTDSHealthComponent::UTDSHealthComponent()
@@ -53,7 +54,7 @@ void UTDSHealthComponent::SetMaxHealth(float NewMaxHealth)
 	MaxHealth = NewMaxHealth;
 }
 
-void UTDSHealthComponent::ChangeHealthValue(float ChangeValue)
+void UTDSHealthComponent::ChangeHealthValue_OnServer_Implementation(float ChangeValue)
 {
 	if (bIsImmunToDamage)
 	{
@@ -91,3 +92,9 @@ void UTDSHealthComponent::HealthChangeEvent_Multicast_Implementation(float NewHe
 	OnHealthChange.Broadcast(NewHealth, Value);
 }
 
+void UTDSHealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UTDSHealthComponent, Health);
+}

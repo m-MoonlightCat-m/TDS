@@ -85,8 +85,8 @@ public:
 	bool SwitchWeaponToInventory(FWeaponSlot NewWeapon, int32 IndexSlot, int32 CurrentIndexWeaponChar, FDropItem& DropItemInfo);
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interface")
 	void TryGetWeaponToInventory_OnServer(AActor* PickUpActor, FWeaponSlot NewWeapon);
-	UFUNCTION(BlueprintCallable, Category = "Interface")
-	void DropWeaponByIndex(int32 ByIndex, FDropItem& DropItemInfo);
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Interface")
+	void DropWeaponByIndex_OnServer(int32 ByIndex);
 	UFUNCTION(BlueprintCallable, Category = "Interface")
 	bool GetDropItemInfoFromInventory(int32 IndexSlot, FDropItem &DropItemInfo);
 

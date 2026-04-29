@@ -3,19 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
-#include "../Interface/TDS_IntrfcGameActor.h"
+#include "GameFramework/Character.h"
 #include "../StateEffects/TDS_StateEffect.h"
-#include "TDS_EnvironmentStructure.generated.h"
+#include "../Interface/TDS_IntrfcGameActor.h"
+#include "TDS_EnemyCharacter.generated.h"
 
 UCLASS()
-class TDS_API ATDS_EnvironmentStructure : public AActor, public ITDS_IntrfcGameActor
+class TDS_API ATDS_EnemyCharacter : public ACharacter, public ITDS_IntrfcGameActor
 {
 	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
-	ATDS_EnvironmentStructure();
+
+public:
+	// Sets default values for this character's properties
+	ATDS_EnemyCharacter();
 
 protected:
 	// Called when the game starts or when spawned
@@ -26,9 +26,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	EPhysicalSurface GetSurfaceType() override;
+	// Called to bind functionality to input
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	TArray<UTDS_StateEffect*> GetAllCurrentEffects() override;
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void AddEffect(UTDS_StateEffect* newEffect);
 	void AddEffect_Implementation(UTDS_StateEffect* newEffect) override;
@@ -39,8 +39,6 @@ public:
 	//Effect
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
 	TArray<UNiagaraComponent*> NiagaraSystemEffects;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
-	FVector OffsetEffect = FVector(0);
 
 	UPROPERTY(Replicated, BlueprintReadOnly, EditDefaultsOnly, Category = "Setting")
 	TArray<UTDS_StateEffect*> Effects;
@@ -61,5 +59,4 @@ public:
 
 	UFUNCTION()
 	void SwitchEffect(UTDS_StateEffect* Effect, bool bIsAdd);
-	
 };
