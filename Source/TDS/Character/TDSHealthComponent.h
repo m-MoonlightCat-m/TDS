@@ -36,10 +36,14 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+	UPROPERTY(Replicated)
 	float MaxHealth = 100.0f;
 
 	UPROPERTY(Replicated)
 	float Health = MaxHealth;
+
+	UPROPERTY(Replicated)
+	bool bIsAlive = true;
 
 public:	
 	// Called every frame
@@ -53,6 +57,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Health")
 	void SetCurrentHealth(float NewHealth);
+
+	UFUNCTION(BlueprintCallable, Category = "Health")
+	bool GetIsAlive();
 
 	UFUNCTION(BlueprintCallable, Category = "Health")
 	float GetMaxHealth();

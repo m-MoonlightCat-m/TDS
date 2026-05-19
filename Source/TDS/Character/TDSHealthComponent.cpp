@@ -44,6 +44,11 @@ void UTDSHealthComponent::SetCurrentHealth(float NewHealth)
 	Health = NewHealth;
 }
 
+bool UTDSHealthComponent::GetIsAlive()
+{
+	return bIsAlive;
+}
+
 float UTDSHealthComponent::GetMaxHealth()
 {
 	return MaxHealth;
@@ -56,30 +61,34 @@ void UTDSHealthComponent::SetMaxHealth(float NewMaxHealth)
 
 void UTDSHealthComponent::ChangeHealthValue_OnServer_Implementation(float ChangeValue)
 {
-	if (bIsImmunToDamage)
+	if (bIsAlive)
 	{
-		return;
-	}
-
-	ChangeValue = ChangeValue * CoefDamage;
-
-	Health += ChangeValue;
-
-	//OnHealthChange.Broadcast(Health, ChangeValue);
-	HealthChangeEvent_Multicast(Health, ChangeValue);
-
-	if (Health > MaxHealth)
-	{
-		Health = MaxHealth;
-	}
-	else
-	{
-		if (Health <= 0.0f)
+		if (bIsImmunToDamage)
 		{
-			//OnDead.Broadcast();
-			DeadEvent_Multicast();
+			return;
 		}
-	}	
+
+		ChangeValue = ChangeValue * CoefDamage;
+
+		Health += ChangeValue;
+
+		//OnHealthChange.Broadcast(Health, ChangeValue);
+		HealthChangeEvent_Multicast(Health, ChangeValue);
+
+		if (Health > MaxHealth)
+		{
+			Health = MaxHealth;
+		}
+		else
+		{
+			if (Health <= 0.0f)
+			{
+				bIsAlive = false;
+				//OnDead.Broadcast();
+				DeadEvent_Multicast();
+			}
+		}
+	}
 }
 
 void UTDSHealthComponent::DeadEvent_Multicast_Implementation()
@@ -97,4 +106,6 @@ void UTDSHealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(UTDSHealthComponent, Health);
+	DOREPLIFETIME(UTDSHealthComponent, MaxHealth);
+	DOREPLIFETIME(UTDSHealthComponent, bIsAlive);
 }
