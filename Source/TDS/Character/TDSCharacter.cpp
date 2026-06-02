@@ -796,6 +796,8 @@ void ATDSCharacter::CharDead_BP_Implementation()
 
 void ATDSCharacter::CharDead()
 {
+	CharDead_BP();
+
 	if (HasAuthority())
 	{
 		float TimeAnim = 0.0f;
@@ -817,6 +819,12 @@ void ATDSCharacter::CharDead()
 
 		//Timer Ragdoll
 		GetWorldTimerManager().SetTimer(TimerHandle_RagDollTimer, this, &ATDSCharacter::EnableRagdoll_Multicast, TimeAnim, false);
+	
+		SetLifeSpan(20.0f);
+		if (GetCurrentWeapon())
+		{
+			GetCurrentWeapon()->SetLifeSpan(20.0f);
+		}
 	}
 	else
 	{
@@ -828,8 +836,6 @@ void ATDSCharacter::CharDead()
 
 	if (GetCapsuleComponent())
 		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
-
-	CharDead_BP();
 }
 
 void ATDSCharacter::EnableRagdoll_Multicast_Implementation()
