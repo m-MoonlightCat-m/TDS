@@ -27,6 +27,7 @@ bool UTDS_StateEffect::InitObject(AActor* Actor, FName NameBonHit)
 
 void UTDS_StateEffect::DestroyObject()
 {
+
 	ITDS_IntrfcGameActor* myInterface = Cast<ITDS_IntrfcGameActor>(myActor);
 	if (myInterface)
 	{

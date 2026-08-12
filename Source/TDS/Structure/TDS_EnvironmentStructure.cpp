@@ -112,11 +112,11 @@ void ATDS_EnvironmentStructure::SwitchEffect(UTDS_StateEffect* Effect, bool bIsA
 		{
 			FName NameBonToAttached = NAME_None;
 			FVector Loc = OffsetEffect;
-
 			USceneComponent* mySceneComp = GetRootComponent();
 			if (mySceneComp)
 			{
 				UNiagaraComponent* newNiagaraEmmiter = UNiagaraFunctionLibrary::SpawnSystemAttached(Effect->NiagaraEffect, mySceneComp, NameBonToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
+				NiagaraSystemEffects.Add(newNiagaraEmmiter);
 			}
 		}
 	}
@@ -132,14 +132,11 @@ void ATDS_EnvironmentStructure::SwitchEffect(UTDS_StateEffect* Effect, bool bIsA
 				{
 					if (NiagaraSystemEffects[i]->GetAsset() && Effect->NiagaraEffect && Effect->NiagaraEffect == NiagaraSystemEffects[i]->GetAsset())
 					{
-						UE_LOG(LogTemp, Log, TEXT("Удаление Niagara Effect: %s"), *Effect->NiagaraEffect->GetName());
 						bIsFind = true;
 						NiagaraSystemEffects[i]->Deactivate();
 						NiagaraSystemEffects[i]->DestroyComponent();
 						NiagaraSystemEffects.RemoveAt(i);
 					}
-					else
-						UE_LOG(LogTemp, Warning, TEXT("Несовпадающий эффект: найден %s, ожидается %s"), *NiagaraSystemEffects[i]->GetAsset()->GetName(), *Effect->NiagaraEffect->GetName());
 					i++;
 				}
 			}
