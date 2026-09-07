@@ -95,11 +95,14 @@ void ATDS_EnemyCharacter::SwitchEffect(UTDS_StateEffect * Effect, bool bIsAdd)
 		{
 			FName NameBonToAttached = Effect->NameBon;
 			FVector Loc = FVector(0);
+
 			USkeletalMeshComponent* myMesh = GetMesh();
 			if (myMesh)
 			{
 				UNiagaraComponent* newNiagaraEmmiter = UNiagaraFunctionLibrary::SpawnSystemAttached(Effect->NiagaraEffect, myMesh, NameBonToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
-				NiagaraSystemEffects.Add(newNiagaraEmmiter);
+				
+				if (newNiagaraEmmiter)
+					NiagaraSystemEffects.Add(newNiagaraEmmiter);
 			}
 		}
 	}
@@ -108,21 +111,23 @@ void ATDS_EnemyCharacter::SwitchEffect(UTDS_StateEffect * Effect, bool bIsAdd)
 		if (Effect && Effect->NiagaraEffect)
 		{
 			FString TargetEffectName = Effect->NiagaraEffect->GetName();
-
+			int32 ArraySize = NiagaraSystemEffects.Num();
 			int32 i = 0;
-			bool bIsFind = false;
-			if (NiagaraSystemEffects.Num() > 0)
+			if (ArraySize <= 0)
 			{
-				while (i < NiagaraSystemEffects.Num() && !bIsFind)
+				return;
+			}
+
+			if (ArraySize > 0)
+			{
+				for (i = ArraySize - 1; i>=0; i--)
 				{
 					if (NiagaraSystemEffects[i]->GetAsset() && Effect->NiagaraEffect && Effect->NiagaraEffect == NiagaraSystemEffects[i]->GetAsset())
 					{
-						bIsFind = true;
 						NiagaraSystemEffects[i]->Deactivate();
 						NiagaraSystemEffects[i]->DestroyComponent();
 						NiagaraSystemEffects.RemoveAt(i);
 					}
-					i++;
 				}
 			}
 
@@ -133,8 +138,9 @@ void ATDS_EnemyCharacter::SwitchEffect(UTDS_StateEffect * Effect, bool bIsAdd)
 bool ATDS_EnemyCharacter::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlag)
 {
 	bool Wrote = Super::ReplicateSubobjects(Channel, Bunch, RepFlag);
+	int32 i = 0;
 
-	for (int32 i = 0; i < Effects.Num(); i++)
+	for (i; i < Effects.Num(); i++)
 	{
 		if (Effects[i])
 		{

@@ -599,5 +599,6 @@ void AWeaponDefault::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(AWeaponDefault, AdditionalWeaponInfo);
 	DOREPLIFETIME(AWeaponDefault, ShootEndLocation);
 	DOREPLIFETIME(AWeaponDefault, WeaponReloading);
+	DOREPLIFETIME(AWeaponDefault, ShouldReduceDispersion);
 }
 

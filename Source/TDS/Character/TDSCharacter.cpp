@@ -664,6 +664,7 @@ void ATDSCharacter::EffectRemove_OnRep()
 {
 	if (EffectRemove)
 	{
+		UE_LOG(LogTemp, Log, TEXT("EffectRemove реплицирован: %s"), *EffectRemove->GetName());
 		SwitchEffect(EffectRemove, false);
 	}
 		
@@ -677,32 +678,56 @@ void ATDSCharacter::SwitchEffect(UTDS_StateEffect* Effect, bool bIsAdd)
 		{
 			FName NameBonToAttached = Effect->NameBon;
 			FVector Loc = FVector(0);
+
 			USkeletalMeshComponent* myMesh = GetMesh();
 			if (myMesh)
 			{
 				UNiagaraComponent* newNiagaraEmmiter = UNiagaraFunctionLibrary::SpawnSystemAttached(Effect->NiagaraEffect, myMesh, NameBonToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
-				NiagaraSystemEffects.Add(newNiagaraEmmiter);
+				
+				if (newNiagaraEmmiter)
+					NiagaraSystemEffects.Add(newNiagaraEmmiter);
 			}
 		}
 	}
 	else
 	{
+		/*for (i = NiagaraSystemEffects.Num() - 1; i >= 0; --i)
+		{
+			if (NiagaraSystemEffects[i] && NiagaraSystemEffects[i]->GetAsset() && Effect->NiagaraEffect)
+			{
+				if (NiagaraSystemEffects[i]->GetAsset() == Effect->NiagaraEffect)
+				{
+					UE_LOG(LogTemp, Log, TEXT("Удаление Niagara Effect: %s"), *Effect->NiagaraEffect->GetName());
+					NiagaraSystemEffects[i]->Deactivate();
+					NiagaraSystemEffects[i]->DestroyComponent();
+					NiagaraSystemEffects.RemoveAt(i);
+				}
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Несовпадающий эффект: найден %s, ожидается %s"), *NiagaraSystemEffects[i]->GetAsset()->GetName(), *Effect->NiagaraEffect->GetName());
+			}
+		}*/
+
 		if (Effect && Effect->NiagaraEffect)
 		{
+			int32 ArraySize = NiagaraSystemEffects.Num();
 			int32 i = 0;
-			bool bIsFind = false;
-			if (NiagaraSystemEffects.Num() > 0)
+			if (ArraySize <= 0)
 			{
-				while (i < NiagaraSystemEffects.Num() && !bIsFind)
+				return;
+			}
+
+			if (ArraySize > 0)
+			{
+				for (i = ArraySize - 1; i>=0; i--)
 				{
 					if (NiagaraSystemEffects[i]->GetAsset() && Effect->NiagaraEffect && Effect->NiagaraEffect == NiagaraSystemEffects[i]->GetAsset())
 					{
-						bIsFind = true;
 						NiagaraSystemEffects[i]->Deactivate();
 						NiagaraSystemEffects[i]->DestroyComponent();
 						NiagaraSystemEffects.RemoveAt(i);
 					}
-					i++;
 				}
 			}
 		

@@ -112,11 +112,14 @@ void ATDS_EnvironmentStructure::SwitchEffect(UTDS_StateEffect* Effect, bool bIsA
 		{
 			FName NameBonToAttached = NAME_None;
 			FVector Loc = OffsetEffect;
+
 			USceneComponent* mySceneComp = GetRootComponent();
 			if (mySceneComp)
 			{
 				UNiagaraComponent* newNiagaraEmmiter = UNiagaraFunctionLibrary::SpawnSystemAttached(Effect->NiagaraEffect, mySceneComp, NameBonToAttached, Loc, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
-				NiagaraSystemEffects.Add(newNiagaraEmmiter);
+				
+				if (newNiagaraEmmiter)
+					NiagaraSystemEffects.Add(newNiagaraEmmiter);
 			}
 		}
 	}
@@ -124,23 +127,25 @@ void ATDS_EnvironmentStructure::SwitchEffect(UTDS_StateEffect* Effect, bool bIsA
 	{
 		if (Effect && Effect->NiagaraEffect)
 		{
+			int32 ArraySize = NiagaraSystemEffects.Num();
 			int32 i = 0;
-			bool bIsFind = false;
-			if (NiagaraSystemEffects.Num() > 0)
+			if (ArraySize <= 0)
 			{
-				while (i < NiagaraSystemEffects.Num() && !bIsFind)
+				return;
+			}
+
+			if (ArraySize > 0)
+			{
+				for (i = ArraySize - 1; i>=0; i--)
 				{
 					if (NiagaraSystemEffects[i]->GetAsset() && Effect->NiagaraEffect && Effect->NiagaraEffect == NiagaraSystemEffects[i]->GetAsset())
 					{
-						bIsFind = true;
 						NiagaraSystemEffects[i]->Deactivate();
 						NiagaraSystemEffects[i]->DestroyComponent();
 						NiagaraSystemEffects.RemoveAt(i);
 					}
-					i++;
 				}
 			}
-
 		}
 	}
 }
@@ -148,8 +153,9 @@ void ATDS_EnvironmentStructure::SwitchEffect(UTDS_StateEffect* Effect, bool bIsA
 bool ATDS_EnvironmentStructure::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlag)
 {
 	bool Wrote = Super::ReplicateSubobjects(Channel, Bunch, RepFlag);
+	int32 i = 0;
 
-	for (int32 i = 0; i < Effects.Num(); i++)
+	for (i = 0; i < Effects.Num(); i++)
 	{
 		if (Effects[i])
 		{
